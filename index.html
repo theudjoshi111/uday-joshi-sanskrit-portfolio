@@ -309,7 +309,7 @@ html.webgl-on .stage>div{pointer-events:none}
 .fallback-page:first-child{border-radius:7px 0 0 7px;text-align:center}
 .fallback-page:last-child{border-radius:0 7px 7px 0;text-align:center}
 .fallback-shloka{margin:0;white-space:pre-line;font:600 clamp(.75rem,2vw,1rem)/1.8 "Tiro Devanagari Sanskrit",serif}
-.fallback-meaning{margin:0;color:#665744;font:italic clamp(.6rem,1.4vw,.72rem)/1.55 Georgia,serif}
+.fallback-meaning{margin:0;color:#14100a;font:600 clamp(.6rem,1.4vw,.72rem)/1.55 Georgia,serif}
 .fallback-page-number{margin-top:auto;color:#8f754a;font:.58rem Arial,sans-serif}
 html.no-webgl .css-fallback{display:flex}
 html.no-webgl #webglHero{display:none}
@@ -1059,7 +1059,9 @@ html.no-webgl .stage{height:380px;min-height:380px}
     draw(cv.getContext('2d'), w, h);
     var tex = new THREE.CanvasTexture(cv);
     if (THREE.SRGBColorSpace) tex.colorSpace = THREE.SRGBColorSpace;
-    tex.anisotropy = 4;
+    var maxAniso = 4;
+    try { if (typeof heroRenderer !== 'undefined' && heroRenderer && heroRenderer.capabilities) maxAniso = Math.min(8, heroRenderer.capabilities.getMaxAnisotropy()); } catch (e) {}
+    tex.anisotropy = maxAniso;
     return tex;
   }
   /* One page of the manuscript: a shloka (whole Devanagari strings, one
@@ -1103,16 +1105,16 @@ html.no-webgl .stage{height:380px;min-height:380px}
       ctx.font = '600 ' + verseSize + 'px "Tiro Devanagari Sanskrit", serif';
       var lineHeight = Math.max(76, verseSize * 1.55);
       var verseBlockHeight = lines.length * lineHeight;
-      var verseStartY = 450 - verseBlockHeight / 2;
+      var verseStartY = 440 - verseBlockHeight / 2;
       lines.forEach(function (line, idx) { ctx.fillText(line, 512, verseStartY + idx * lineHeight, 820); });
-      var dividerY = Math.max(790, verseStartY + verseBlockHeight + 82);
+      var dividerY = Math.max(775, verseStartY + verseBlockHeight + 82);
       ctx.strokeStyle = 'rgba(153,119,65,.66)'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(270, dividerY); ctx.lineTo(754, dividerY); ctx.stroke();
-      ctx.fillStyle = '#5d4a1f';
-      ctx.font = '700 19px Manrope, sans-serif';
+      ctx.fillStyle = '#3a2c10';
+      ctx.font = '700 24px Manrope, sans-serif';
       ctx.fillText('ENGLISH MEANING', 512, dividerY + 42);
-      ctx.fillStyle = '#2b2620';
-      ctx.font = 'italic 42px Georgia, "Times New Roman", serif';
+      ctx.fillStyle = '#14100a';
+      ctx.font = '700 48px Georgia, "Times New Roman", serif';
       var words = meaning.split(/\s+/);
       var meaningLines = [], line = '';
       words.forEach(function (word) {
@@ -1121,7 +1123,7 @@ html.no-webgl .stage{height:380px;min-height:380px}
         else line = test;
       });
       if (line) meaningLines.push(line);
-      var meaningLineHeight = 58;
+      var meaningLineHeight = 62;
       var meaningStartY = dividerY + 84;
       meaningLines.slice(0, 7).forEach(function (ml, idx) { ctx.fillText(ml, 512, meaningStartY + idx * meaningLineHeight, 800); });
       ctx.fillStyle = 'rgba(117,91,53,.78)';
