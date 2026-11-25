@@ -61,17 +61,17 @@ nav.links a.active{color:var(--navy);background:var(--goldsoft)}
 #particles{position:absolute;inset:0;width:100%;height:100%;opacity:.85;pointer-events:none}
 .float-char{position:absolute;font-family:"Tiro Devanagari Sanskrit",serif;color:rgba(232,217,174,.16);user-select:none;pointer-events:none;animation:floaty 9s ease-in-out infinite}
 @keyframes floaty{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-18px) rotate(2deg)}}
-.hero-inner{position:relative;max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1.15fr .85fr;gap:44px;align-items:center}
-@media(max-width:900px){.hero-inner{grid-template-columns:1fr}}
+.hero-inner{position:relative;max-width:1180px;margin:0 auto;display:block;text-align:center}
+.hero-text{max-width:840px;margin:0 auto}
 .hero .verse{font-family:"Tiro Devanagari Sanskrit",serif;color:var(--goldsoft);font-size:clamp(18px,2.4vw,24px);letter-spacing:.02em}
 .hero h1{font-family:"Cormorant Garamond",serif;font-size:clamp(42px,6.4vw,76px);line-height:.98;margin:14px 0 6px;font-weight:700;letter-spacing:.01em}
 .hero h1 span{color:var(--goldsoft)}
-.designation{display:flex;align-items:center;gap:14px;margin:16px 0 6px}
+.designation{display:flex;align-items:center;justify-content:center;gap:14px;margin:16px 0 6px}
 .designation .rule{height:1px;width:52px;background:var(--gold)}
 .designation p{margin:0;letter-spacing:.34em;font-weight:800;font-size:clamp(13px,1.8vw,17px);color:#fff}
-.tagline{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:clamp(20px,2.6vw,27px);color:#e8dfc4;max-width:34ch;line-height:1.35;margin:14px 0 10px}
-.sub{color:#c6cee2;max-width:52ch;font-size:16px;margin:0 0 26px}
-.cta{display:flex;flex-wrap:wrap;gap:12px}
+.tagline{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:clamp(20px,2.6vw,27px);color:#e8dfc4;max-width:34ch;line-height:1.35;margin:14px auto 10px}
+.sub{color:#c6cee2;max-width:52ch;font-size:16px;margin:0 auto 26px}
+.cta{display:flex;flex-wrap:wrap;justify-content:center;gap:12px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;font-weight:800;letter-spacing:.08em;font-size:13px;padding:14px 22px;border-radius:999px;min-height:48px;cursor:pointer;border:1px solid transparent;transition:.25s}
 .btn-gold{background:linear-gradient(180deg,#dcbc66,var(--gold));color:#221a05;box-shadow:0 12px 26px rgba(197,162,74,.35)}
 .btn-gold:hover{transform:translateY(-2px)}
@@ -79,12 +79,13 @@ nav.links a.active{color:var(--navy);background:var(--goldsoft)}
 .btn-ghost:hover{border-color:var(--goldsoft);color:var(--goldsoft)}
 .btn-navy{background:var(--navy);color:#fff}
 .btn-navy:hover{background:var(--royal)}
-.hero-stats{display:flex;gap:26px;flex-wrap:wrap;margin-top:34px;border-top:1px solid rgba(255,255,255,.14);padding-top:20px}
+.hero-stats{display:flex;gap:26px;flex-wrap:wrap;justify-content:center;margin-top:34px;border-top:1px solid rgba(255,255,255,.14);padding-top:20px}
 .hero-stats div b{font-family:"Cormorant Garamond",serif;font-size:26px;display:block;color:#fff;line-height:1}
 .hero-stats div span{font-size:11.5px;letter-spacing:.14em;color:#aeb9d4;font-weight:700}
 
 /* 3D BOOK */
-.stage{perspective:1200px;display:grid;place-items:center;min-height:380px}
+.stage{position:relative;perspective:1200px;display:grid;place-items:center;height:480px;min-height:480px;max-width:1180px;margin:36px auto 0}
+@media(max-width:900px){.stage{height:380px;min-height:380px;margin-top:28px}}
 .book-wrap{transform-style:preserve-3d;transition:transform .2s ease-out}
 .book{position:relative;width:320px;max-width:86vw;height:216px;transform-style:preserve-3d;transform:rotateX(4deg)}
 .page{position:absolute;top:0;width:160px;height:216px;background:linear-gradient(180deg,#fdfaf0,#f1e8cf);border:1px solid #d9c98f;box-shadow:inset 0 0 30px rgba(168,133,47,.15);padding:18px 16px;color:#3a2f14;overflow:hidden}
@@ -230,7 +231,7 @@ html.js-anim .hero .stage{animation-delay:.35s}
 .hero h1 .h-word:last-child .h-word-in{animation-delay:.18s}
 @keyframes heroWord{to{transform:none}}
 .hero h1{position:relative}
-.hero h1::after{content:"";display:block;height:2px;width:72px;background:var(--gold);margin-top:14px;border-radius:2px;transform-origin:left;animation:ruleGrow 1s .5s ease both}
+.hero h1::after{content:"";display:block;height:2px;width:72px;background:var(--gold);margin:14px auto 0;border-radius:2px;transform-origin:center;animation:ruleGrow 1s .5s ease both}
 @keyframes ruleGrow{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:1}}
 /* Slow gentle sway of the manuscript book (keeps its rotateX) */
 .book{animation:bookSway 9s ease-in-out infinite}
@@ -285,12 +286,17 @@ html.js-anim .hero .stage{animation-delay:.35s}
 }
 
 /* ---- Real WebGL layer (Three.js) ---- */
-#webglHero{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.stage #webglHero{position:absolute;inset:0;width:100%;height:100%;pointer-events:auto;z-index:0;cursor:pointer;touch-action:pan-y}
 .hero-inner{position:relative;z-index:2}
+.book-nav{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:20px;position:relative;z-index:2}
+.book-nav .btn:disabled{opacity:.4;cursor:default;transform:none}
+.book-page-ind{color:#aeb9d4;font-size:12px;letter-spacing:.18em;font-weight:700;min-width:120px;text-align:center}
+.book-hint{text-align:center;color:#aeb9d4;font-size:13px;margin:12px 0 0}
 .hero h1,.hero .designation,.hero .tagline,.hero .sub{text-shadow:0 2px 18px rgba(6,14,36,.9),0 0 3px rgba(6,14,36,.65)}
 .hero .float-char{z-index:1}
 html.webgl-on .stage .book{visibility:hidden}
-html.webgl-on .stage .orbit{opacity:.7}
+html.webgl-on .stage .orbit{opacity:.7;pointer-events:none}
+html.webgl-on .stage>div{pointer-events:none}
 .medals-3d{position:relative;height:200px;margin-top:26px;border-radius:22px;background:radial-gradient(600px 200px at 50% 0%,#24468c 0%,transparent 60%),linear-gradient(160deg,var(--navy2),var(--navy));overflow:hidden;box-shadow:var(--shadow)}
 .medals-3d canvas{width:100%;height:100%;display:block;pointer-events:none}
 .medals-note{position:absolute;left:0;right:0;bottom:10px;text-align:center;color:rgba(232,217,174,.75);font-size:11px;letter-spacing:.22em;font-weight:700;pointer-events:none}
@@ -326,14 +332,8 @@ html.webgl-on .stage .orbit{opacity:.7}
 <!-- HERO -->
 <section class="hero" id="home" style="padding-top:132px">
   <canvas id="particles" aria-hidden="true"></canvas>
-  <canvas id="webglHero" aria-hidden="true"></canvas>
-  <span class="float-char" style="left:6%;top:18%;font-size:64px">अ</span>
-  <span class="float-char" style="right:4%;top:14%;font-size:52px;animation-delay:-3s">आ</span>
-  <span class="float-char" style="left:46%;top:8%;font-size:40px;animation-delay:-5s">इ</span>
-  <span class="float-char" style="left:3%;bottom:12%;font-size:44px;animation-delay:-2s">ॐ</span>
-  <span class="float-char" style="right:5%;bottom:20%;font-size:58px;animation-delay:-6s">ज्ञा</span>
   <div class="hero-inner">
-    <div>
+    <div class="hero-text">
       <div class="verse">विद्या अमृतमश्नुते</div>
       <h1>UDAY<br/><span>JOSHI</span></h1>
       <div class="designation"><span class="rule"></span><p>SANSKRIT EDUCATOR</p></div>
@@ -352,6 +352,12 @@ html.webgl-on .stage .orbit{opacity:.7}
       </div>
     </div>
     <div class="stage" aria-hidden="true">
+      <canvas id="webglHero" aria-hidden="true"></canvas>
+      <span class="float-char" style="left:1%;top:4%;font-size:56px">अ</span>
+      <span class="float-char" style="right:2%;top:8%;font-size:48px;animation-delay:-3s">आ</span>
+      <span class="float-char" style="left:46%;top:2%;font-size:38px;animation-delay:-5s">इ</span>
+      <span class="float-char" style="left:4%;bottom:6%;font-size:40px;animation-delay:-2s">ॐ</span>
+      <span class="float-char" style="right:4%;bottom:10%;font-size:44px;animation-delay:-6s">ज्ञा</span>
       <div>
         <div class="book-wrap" id="bookWrap">
           <div style="position:relative">
@@ -373,6 +379,12 @@ html.webgl-on .stage .orbit{opacity:.7}
         <p class="book-caption"><span class="dev">न हि ज्ञानेन सदृशं पवित्रमिह विद्यते</span>THE MANUSCRIPT OF KNOWLEDGE</p>
       </div>
     </div>
+    <div class="book-nav">
+      <button class="btn btn-ghost" id="prevPage" type="button">← Previous page</button>
+      <span class="book-page-ind" id="pageInd">Pages 1–2 of 6</span>
+      <button class="btn btn-ghost" id="nextPage" type="button">Next page →</button>
+    </div>
+    <p class="book-hint">Click the book or use the buttons to turn the pages</p>
   </div>
 </section>
 
@@ -935,6 +947,24 @@ html.webgl-on .stage .orbit{opacity:.7}
   }
   if (!webglOK()) return;
 
+  /* The manuscript's six pages: three spreads, each page one shloka plus its
+     English meaning. Devanagari is drawn whole-line via fillText — never split. */
+  var PAGES = [
+    { num: '१', lines: ['विद्या ददाति विनयं', 'विनयाद् याति पात्रताम् ।', 'पात्रत्वाद् धनमाप्नोति', 'धनाद् धर्मं ततः सुखम् ॥'],
+      meaning: 'Education gives humility; humility brings worthiness; worthiness brings wealth; wealth brings dharma, and from that, happiness.' },
+    { num: '२', lines: ['न हि ज्ञानेन सदृशं', 'पवित्रमिह विद्यते ॥'],
+      meaning: 'Nothing in this world purifies like knowledge.' },
+    { num: '३', lines: ['न चोरहार्यं न च राजहार्यं', 'न भ्रातृभाज्यं न च भारकारि ।', 'व्यये कृते वर्धत एव नित्यं', 'विद्याधनं सर्वधनप्रधानम् ॥'],
+      meaning: 'It cannot be stolen, nor taken by kings, nor divided among brothers. Spent, it only grows — the wealth of knowledge is the highest of all wealth.' },
+    { num: '४', lines: ['पुस्तकस्था तु या विद्या', 'परहस्तगतं धनम् ।', 'कार्यकाले समुत्पन्ने', 'न सा विद्या न तद् धनम् ॥'],
+      meaning: 'Knowledge that stays only in books, and wealth in another’s hands, are of no use when the need arises.' },
+    { num: '५', lines: ['श्रद्धावान् लभते ज्ञानं', 'तत्परः संयतेन्द्रियः ।'],
+      meaning: 'The faithful, devoted and self-controlled attain knowledge — and with it, supreme peace.' },
+    { num: '६', lines: ['अज्ञानतिमिरान्धस्य', 'ज्ञानाञ्जनशलाकया ।', 'चक्षुरुन्मीलितं येन', 'तस्मै श्रीगुरवे नमः ॥'],
+      meaning: 'Salutations to the teacher who, with the collyrium of knowledge, opens eyes blinded by the darkness of ignorance.' }
+  ];
+  var SPREADS = 3;
+
   /* ---------- canvas texture helpers (whole strings only) ---------- */
   function makeCanvasTexture(w, h, draw) {
     var cv = document.createElement('canvas'); cv.width = w; cv.height = h;
@@ -944,7 +974,9 @@ html.webgl-on .stage .orbit{opacity:.7}
     tex.anisotropy = 4;
     return tex;
   }
-  function pageTexture(heading, lines) {
+  /* One page of the manuscript: a shloka (whole Devanagari strings, one
+     fillText per line — never split) plus its English meaning, wrapped. */
+  function pageTexture(heading, lines, meaning) {
     return makeCanvasTexture(512, 640, function (ctx, w, h) {
       var g = ctx.createLinearGradient(0, 0, 0, h);
       g.addColorStop(0, '#fdfaf0'); g.addColorStop(1, '#efe4c6');
@@ -952,17 +984,45 @@ html.webgl-on .stage .orbit{opacity:.7}
       ctx.strokeStyle = '#c5a24a'; ctx.lineWidth = 6; ctx.strokeRect(14, 14, w - 28, h - 28);
       ctx.strokeStyle = 'rgba(197,162,74,.5)'; ctx.lineWidth = 2; ctx.strokeRect(28, 28, w - 56, h - 56);
       ctx.fillStyle = '#7a5c12'; ctx.textAlign = 'center';
-      ctx.font = '600 54px "Tiro Devanagari Sanskrit", serif';
-      ctx.fillText(heading, w / 2, 108);
+      ctx.font = '600 44px "Tiro Devanagari Sanskrit", serif';
+      ctx.fillText(heading, w / 2, 96);
       ctx.strokeStyle = '#c5a24a'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(w / 2 - 70, 138); ctx.lineTo(w / 2 + 70, 138); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(w / 2 - 70, 124); ctx.lineTo(w / 2 + 70, 124); ctx.stroke();
+      /* Shloka lines, auto-fitted so the longest line fits the page. */
+      var size = 36, i, maxW = 0;
+      var fit = function () {
+        ctx.font = size + 'px "Tiro Devanagari Sanskrit", serif';
+        maxW = 0;
+        lines.forEach(function (ln) { maxW = Math.max(maxW, ctx.measureText(ln).width); });
+      };
+      fit();
+      while (maxW > w - 64 && size > 22) { size -= 2; fit(); }
       ctx.fillStyle = '#54451c';
-      ctx.font = '40px "Tiro Devanagari Sanskrit", serif';
-      lines.forEach(function (ln, i) { ctx.fillText(ln, w / 2, 210 + i * 62); });
-      ctx.strokeStyle = 'rgba(122,92,18,.28)'; ctx.lineWidth = 2;
-      for (var i = 0; i < 5; i++) {
-        var y = 440 + i * 30;
-        ctx.beginPath(); ctx.moveTo(70, y); ctx.lineTo(w - 70, y); ctx.stroke();
+      var y = 176;
+      lines.forEach(function (ln) { ctx.fillText(ln, w / 2, y); y += size + 20; });
+      /* English meaning, wrapped in italic serif, shrunk until it fits. */
+      if (meaning) {
+        var my = y + 28;
+        ctx.fillStyle = '#a8852f'; ctx.font = '700 15px Manrope, sans-serif';
+        ctx.fillText('ENGLISH MEANING', w / 2, my);
+        var mSize = 24, lineH = 32;
+        var wrap = function () {
+          ctx.font = 'italic ' + mSize + 'px "Cormorant Garamond", serif';
+          var out = [], cur = '';
+          meaning.split(' ').forEach(function (wd) {
+            var trial = cur ? cur + ' ' + wd : wd;
+            if (ctx.measureText(trial).width > w - 84 && cur) { out.push(cur); cur = wd; }
+            else { cur = trial; }
+          });
+          if (cur) out.push(cur);
+          return out;
+        };
+        var mLines = wrap();
+        while (my + 30 + (mLines.length - 1) * lineH > h - 84 && mSize > 17) {
+          mSize -= 2; lineH = mSize <= 20 ? 28 : 32; mLines = wrap();
+        }
+        ctx.fillStyle = '#6d5a22';
+        mLines.forEach(function (ln, li) { ctx.fillText(ln, w / 2, my + 30 + li * lineH); });
       }
       ctx.fillStyle = '#a8852f'; ctx.font = '28px "Tiro Devanagari Sanskrit", serif';
       ctx.fillText('॥ शुभम् भवतु ॥', w / 2, h - 52);
@@ -1021,11 +1081,13 @@ html.webgl-on .stage .orbit{opacity:.7}
   var heroVisible = false, medalsVisible = false, loopRunning = false;
   var time = 0, lastTs = 0;
   var mouseX = 0, mouseY = 0, targetMouseX = 0, targetMouseY = 0, heroScroll = 0;
-  var bookPos = new THREE.Vector3(1.4, 0, 0);
+  var bookPos = new THREE.Vector3(0, 0, 0);
   var bookScale = 1;
+  var pageTexs = [];
+  var spread = 0, flipping = false, flipT = 0, flipFrom = 0, flipTarget = 0, flipDir = 0, prevT = 0;
+  var leftMat, rightMat, leafFrontMat, leafBackMat, flipPivot;
 
   var heroRenderer, heroScene, heroCamera, bookGroup, heroPoints;
-  var turnPivots = [];
   var letters = [];
   var medalsRenderer, medalsScene, medalsCamera, medalGroups = [];
 
@@ -1058,35 +1120,29 @@ html.webgl-on .stage .orbit{opacity:.7}
     );
     bookGroup.add(block);
 
-    var pageMat = function (tex) {
-      return new THREE.MeshStandardMaterial({ map: tex, roughness: 0.8, metalness: 0.02 });
-    };
-    var leftTex = pageTexture('संस्कृतम्', ['न हि ज्ञानेन', 'सदृशं पवित्रम्', 'इह विद्यते ॥']);
-    var rightTex = pageTexture('ज्ञानम्', ['विद्या ददाति', 'विनयं, विनयाद्', 'याति पात्रताम् ॥']);
-    var leftPage = new THREE.Mesh(new THREE.PlaneGeometry(1.68, 2.32), pageMat(leftTex));
+    /* Six pages, cached once; the two static pages show the current spread. */
+    pageTexs = PAGES.map(function (p) { return pageTexture('श्लोक ' + p.num, p.lines, p.meaning); });
+    leftMat = new THREE.MeshStandardMaterial({ map: pageTexs[0], roughness: 0.8, metalness: 0.02 });
+    rightMat = new THREE.MeshStandardMaterial({ map: pageTexs[1], roughness: 0.8, metalness: 0.02 });
+    var leftPage = new THREE.Mesh(new THREE.PlaneGeometry(1.68, 2.32), leftMat);
     leftPage.position.set(-0.85, 0, 0.08); leftPage.rotation.y = -0.28; bookGroup.add(leftPage);
-    var rightPage = new THREE.Mesh(new THREE.PlaneGeometry(1.68, 2.32), pageMat(rightTex));
+    var rightPage = new THREE.Mesh(new THREE.PlaneGeometry(1.68, 2.32), rightMat);
     rightPage.position.set(0.85, 0, 0.08); rightPage.rotation.y = 0.28; bookGroup.add(rightPage);
 
-    /* Turning pages: hinged at the spine, front textured, back plain ivory.
-       They turn one way then back (cosine loop) so there is no visible reset. */
-    var turnTexs = [
-      pageTexture('संस्कृतम्', ['अक्षरम्', 'शब्दः', 'श्लोकः']),
-      pageTexture('ज्ञानम्', ['विद्या', 'अमृतम्', 'अश्नुते'])
-    ];
-    var plainMat = new THREE.MeshStandardMaterial({ color: 0xf6efdb, roughness: 0.85, side: THREE.DoubleSide });
-    turnTexs.forEach(function (tex, idx) {
-      var pivot = new THREE.Group();
-      pivot.position.set(0, 0, 0.1 + idx * 0.012);
-      var front = new THREE.Mesh(new THREE.PlaneGeometry(1.68, 2.32), pageMat(tex));
-      front.position.set(0.84, 0, 0);
-      var back = new THREE.Mesh(new THREE.PlaneGeometry(1.68, 2.32), plainMat);
-      back.position.set(0.84, 0, -0.012); back.rotation.y = Math.PI;
-      pivot.add(front); pivot.add(back);
-      pivot.userData.phase = idx * 1.3;
-      pivot.userData.speed = idx === 0 ? 0.785 : 0.571;
-      bookGroup.add(pivot); turnPivots.push(pivot);
-    });
+    /* The turning leaf: a thin box, so its two faces can carry two different
+       page textures (front = the page being turned, back = the page that lands)
+       with neither mirrored. Hidden until a flip starts. */
+    var leafEdge = new THREE.MeshStandardMaterial({ color: 0xf1e8cf, roughness: 0.85 });
+    leafFrontMat = new THREE.MeshStandardMaterial({ map: pageTexs[1], roughness: 0.8, metalness: 0.02 });
+    leafBackMat = new THREE.MeshStandardMaterial({ map: pageTexs[0], roughness: 0.8, metalness: 0.02 });
+    flipPivot = new THREE.Group();
+    flipPivot.position.set(0, 0, 0.12);
+    var flipLeaf = new THREE.Mesh(new THREE.BoxGeometry(1.68, 2.32, 0.02),
+      [leafEdge, leafEdge, leafEdge, leafEdge, leafFrontMat, leafBackMat]);
+    flipLeaf.position.set(0.84, 0, 0);
+    flipPivot.add(flipLeaf);
+    flipPivot.visible = false;
+    bookGroup.add(flipPivot);
 
     /* Cheap fake floor shadow under the book */
     var shadow = new THREE.Mesh(
@@ -1101,12 +1157,12 @@ html.webgl-on .stage .orbit{opacity:.7}
 
     /* Dimensional Devanagari letters: canvas texture on a thin box (real thickness) */
     var letterDefs = [
-      { ch: 'अ', x: -1.85, y: 1.35, z: -0.9, s: 0.62 },
-      { ch: 'आ', x: 2.2, y: 1.45, z: -1.1, s: 0.58 },
-      { ch: 'इ', x: -2.0, y: -0.95, z: -0.4, s: 0.5 },
-      { ch: 'उ', x: 2.3, y: -1.05, z: 0.1, s: 0.54 },
-      { ch: 'ॐ', x: 0.1, y: 2.0, z: -1.5, s: 0.66 },
-      { ch: 'ज्ञ', x: 1.7, y: 0.4, z: -1.9, s: 0.6 }
+      { ch: 'अ', x: -2.35, y: 1.3, z: -0.9, s: 0.55 },
+      { ch: 'आ', x: 2.4, y: 1.35, z: -1.1, s: 0.52 },
+      { ch: 'इ', x: -2.5, y: -1.15, z: -0.4, s: 0.46 },
+      { ch: 'उ', x: 2.5, y: -1.2, z: 0.1, s: 0.48 },
+      { ch: 'ॐ', x: 0, y: 1.25, z: -1.5, s: 0.55 },
+      { ch: 'ज्ञ', x: 1.9, y: 0.4, z: -1.9, s: 0.55 }
     ];
     letterDefs.forEach(function (d, i) {
       var tex = letterTexture(d.ch);
@@ -1125,8 +1181,8 @@ html.webgl-on .stage .orbit{opacity:.7}
     var count = isMobile ? 40 : 120;
     var pos = new Float32Array(count * 3);
     for (var i = 0; i < count; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 7;
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 4.4;
+      pos[i * 3] = (Math.random() - 0.5) * 8;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 3.6;
       pos[i * 3 + 2] = -2 + Math.random() * 3;
     }
     var geo = new THREE.BufferGeometry();
@@ -1182,25 +1238,20 @@ html.webgl-on .stage .orbit{opacity:.7}
   }
 
   /* ---------- layout / interaction ---------- */
+  /* The canvas lives inside .stage now: size from the stage, book centred
+     at world (0,0), camera always looking at (0,0,0) — it can never drift
+     over the text above, because the canvas does not extend there. */
   function layoutHero() {
-    if (!heroRenderer || !heroCamera) return;
-    var w = hero.clientWidth, h = hero.clientHeight;
+    if (!heroRenderer || !heroCamera || !stage) return;
+    var w = stage.clientWidth, h = stage.clientHeight;
     if (!w || !h) return;
     var aspect = w / h;
     heroCamera.aspect = aspect;
-    heroCamera.position.z = Math.max(7.8, Math.min(13, 6.4 / Math.max(aspect, 0.25)));
+    heroCamera.position.z = aspect < 1.1 ? 6.2 : aspect < 1.6 ? 5.6 : 5.0;
     heroCamera.updateProjectionMatrix();
     heroRenderer.setSize(w, h, false);
-    if (stage) {
-      var hr = hero.getBoundingClientRect(), sr = stage.getBoundingClientRect();
-      var visH = 2 * Math.tan(THREE.MathUtils.degToRad(heroCamera.fov / 2)) * heroCamera.position.z;
-      var visW = visH * aspect;
-      bookPos.x = ((sr.left + sr.width / 2 - hr.left) / w - 0.5) * visW;
-      bookPos.y = (0.5 - (sr.top + sr.height / 2 - hr.top) / h) * visH;
-    }
-    /* Keep the book on the right side: never let it drift over the text column. */
-    bookPos.x = Math.max(bookPos.x, 1.15);
-    bookScale = aspect < 0.75 ? 0.62 : aspect < 1.1 ? 0.8 : 0.82;
+    bookPos.set(0, 0, 0);
+    bookScale = aspect < 1.1 ? 0.62 : aspect < 1.6 ? 0.8 : 1.15;
     if (bookGroup) bookGroup.scale.setScalar(bookScale);
   }
   function updateHeroScroll() {
@@ -1217,15 +1268,21 @@ html.webgl-on .stage .orbit{opacity:.7}
   window.addEventListener('scroll', function () { updateHeroScroll(); }, { passive: true });
 
   function updateHero(t) {
+    var dt = prevT ? Math.min(Math.max(t - prevT, 0), 0.05) : 0.016;
+    prevT = t;
     mouseX += (targetMouseX - mouseX) * 0.06;
     mouseY += (targetMouseY - mouseY) * 0.06;
     bookGroup.position.set(bookPos.x, bookPos.y + Math.sin(t * 0.6) * 0.09, 0);
     bookGroup.rotation.y = -0.16 + mouseX * 0.3 + heroScroll * 0.55;
     bookGroup.rotation.x = -0.06 + mouseY * 0.14;
     bookGroup.rotation.z = Math.sin(t * 0.4) * 0.02;
-    turnPivots.forEach(function (p) {
-      p.rotation.y = -Math.PI * 0.92 * (0.5 - 0.5 * Math.cos(t * p.userData.speed + p.userData.phase));
-    });
+    if (flipping && flipPivot) {
+      flipT += dt / 0.9;
+      var ft = Math.min(flipT, 1);
+      var e = ft < 0.5 ? 4 * ft * ft * ft : 1 - Math.pow(-2 * ft + 2, 3) / 2;
+      flipPivot.rotation.y = flipFrom + (flipDir > 0 ? -Math.PI * e : Math.PI * e);
+      if (flipT >= 1) finishFlip();
+    }
     letters.forEach(function (m) {
       var u = m.userData;
       m.position.set(bookPos.x + u.bx * bookScale, bookPos.y + u.by * bookScale + Math.sin(t * 0.7 + u.phase) * 0.12, u.bz);
@@ -1263,10 +1320,76 @@ html.webgl-on .stage .orbit{opacity:.7}
     requestAnimationFrame(tick);
   }
 
+  /* ---------- interactive page flipping ---------- */
+  var prevBtn = document.getElementById('prevPage');
+  var nextBtn = document.getElementById('nextPage');
+  var pageInd = document.getElementById('pageInd');
+  function updateBookUI() {
+    if (pageInd) pageInd.textContent = 'Pages ' + (spread * 2 + 1) + '–' + (spread * 2 + 2) + ' of 6';
+    if (prevBtn) prevBtn.disabled = (spread === 0);
+    if (nextBtn) nextBtn.disabled = (spread === SPREADS - 1);
+  }
+  function setSpread(s) {
+    spread = s;
+    if (leftMat) { leftMat.map = pageTexs[s * 2]; leftMat.needsUpdate = true; }
+    if (rightMat) { rightMat.map = pageTexs[s * 2 + 1]; rightMat.needsUpdate = true; }
+    updateBookUI();
+  }
+  function flipTo(target, dir) {
+    if (flipping) return;
+    if (target < 0 || target > SPREADS - 1 || target === spread) return;
+    flipTarget = target; flipDir = dir; flipT = 0; flipping = true;
+    if (dir > 0) {
+      /* Turning the right page over to the left: the page revealed underneath
+         is already the new right page; the leaf shows the old right page on
+         its front and the new left page on its back. */
+      if (rightMat) { rightMat.map = pageTexs[target * 2 + 1]; rightMat.needsUpdate = true; }
+      leafFrontMat.map = pageTexs[spread * 2 + 1]; leafFrontMat.needsUpdate = true;
+      leafBackMat.map = pageTexs[target * 2]; leafBackMat.needsUpdate = true;
+      flipFrom = 0;
+    } else {
+      if (leftMat) { leftMat.map = pageTexs[target * 2]; leftMat.needsUpdate = true; }
+      leafBackMat.map = pageTexs[spread * 2]; leafBackMat.needsUpdate = true;
+      leafFrontMat.map = pageTexs[target * 2 + 1]; leafFrontMat.needsUpdate = true;
+      flipFrom = -Math.PI;
+    }
+    flipPivot.rotation.y = flipFrom;
+    flipPivot.visible = true;
+  }
+  function finishFlip() {
+    flipping = false;
+    if (flipPivot) { flipPivot.visible = false; flipPivot.rotation.y = 0; }
+    setSpread(flipTarget);
+  }
+  function flipForward() { flipTo(spread + 1, 1); }
+  function flipBack() { flipTo(spread - 1, -1); }
+  if (prevBtn) prevBtn.addEventListener('click', flipBack);
+  if (nextBtn) nextBtn.addEventListener('click', flipForward);
+  if (heroCanvas) {
+    var swipeX = null, swipeY = null;
+    heroCanvas.addEventListener('pointerdown', function (e) { swipeX = e.clientX; swipeY = e.clientY; });
+    heroCanvas.addEventListener('pointerup', function (e) {
+      if (swipeX === null) return;
+      var dx = e.clientX - swipeX, dy = e.clientY - swipeY;
+      swipeX = null; swipeY = null;
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) { if (dx < 0) flipForward(); else flipBack(); return; }
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) {
+        var r = heroCanvas.getBoundingClientRect();
+        if ((e.clientX - r.left) / r.width >= 0.5) flipForward(); else flipBack();
+      }
+    });
+  }
+  document.addEventListener('keydown', function (e) {
+    if (!heroVisible) return;
+    if (e.key === 'ArrowRight') flipForward();
+    else if (e.key === 'ArrowLeft') flipBack();
+  });
+
   try {
     buildHero();
     buildMedals();
     layoutHero(); layoutMedals(); updateHeroScroll();
+    updateBookUI();
     document.documentElement.classList.add('webgl-on');
     new IntersectionObserver(function (es) {
       heroVisible = es[0].isIntersecting;
