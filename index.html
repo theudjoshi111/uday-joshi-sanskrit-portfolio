@@ -1108,21 +1108,22 @@ html.no-webgl .stage{height:380px;min-height:380px}
       var dividerY = Math.max(790, verseStartY + verseBlockHeight + 82);
       ctx.strokeStyle = 'rgba(153,119,65,.66)'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(270, dividerY); ctx.lineTo(754, dividerY); ctx.stroke();
-      ctx.fillStyle = '#716047';
-      ctx.font = '700 17px Manrope, sans-serif';
+      ctx.fillStyle = '#5d4a1f';
+      ctx.font = '700 19px Manrope, sans-serif';
       ctx.fillText('ENGLISH MEANING', 512, dividerY + 42);
-      ctx.font = 'italic 34px Georgia, "Times New Roman", serif';
+      ctx.fillStyle = '#2b2620';
+      ctx.font = 'italic 42px Georgia, "Times New Roman", serif';
       var words = meaning.split(/\s+/);
       var meaningLines = [], line = '';
       words.forEach(function (word) {
         var test = line ? line + ' ' + word : word;
-        if (ctx.measureText(test).width > 760 && line) { meaningLines.push(line); line = word; }
+        if (ctx.measureText(test).width > 780 && line) { meaningLines.push(line); line = word; }
         else line = test;
       });
       if (line) meaningLines.push(line);
-      var meaningLineHeight = 49;
+      var meaningLineHeight = 58;
       var meaningStartY = dividerY + 84;
-      meaningLines.slice(0, 7).forEach(function (ml, idx) { ctx.fillText(ml, 512, meaningStartY + idx * meaningLineHeight, 790); });
+      meaningLines.slice(0, 7).forEach(function (ml, idx) { ctx.fillText(ml, 512, meaningStartY + idx * meaningLineHeight, 800); });
       ctx.fillStyle = 'rgba(117,91,53,.78)';
       ctx.font = '24px Georgia, serif';
       ctx.fillText(String(pageNo), 512, 1300);
@@ -1205,26 +1206,32 @@ html.no-webgl .stage{height:380px;min-height:380px}
     var coverEdgeMaterial = new THREE.MeshStandardMaterial({ color: 0x9d7b45, roughness: 0.35, metalness: 0.72 });
     var pageBlockMaterial = new THREE.MeshStandardMaterial({ color: 0xe8ddc8, roughness: 0.94, metalness: 0 });
 
-    var base = new THREE.Mesh(new THREE.BoxGeometry(5.32, 0.16, 3.48), navyMaterial);
-    base.position.set(0, -0.13, -0.08); bookGroup.add(base);
+    /* Vertical cover boards BEHIND the pages (front faces at z <= -0.07,
+       pages at z = 0.18). The old flat-lying slabs lay in the XZ plane
+       with front edges at z ~= 1.66, ~1.5 units IN FRONT of the pages, so
+       their navy front faces projected as a dark-blue horizontal band
+       across the divider / English-meaning zone of every page. No mesh
+       in this stack may sit in front of the page planes now. */
+    var base = new THREE.Mesh(new THREE.BoxGeometry(5.32, 3.40, 0.16), navyMaterial);
+    base.position.set(0, 0, -0.16); bookGroup.add(base);
     [-1.31, 1.31].forEach(function (x) {
-      var cover = new THREE.Mesh(new THREE.BoxGeometry(2.62, 0.13, 3.52), navyMaterial);
-      cover.position.set(x, -0.215, -0.08); bookGroup.add(cover);
+      var cover = new THREE.Mesh(new THREE.BoxGeometry(2.62, 3.40, 0.13), navyMaterial);
+      cover.position.set(x, 0, -0.135); bookGroup.add(cover);
     });
-    var spine = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 3.5), coverEdgeMaterial);
-    spine.position.set(0, -0.19, -0.08); bookGroup.add(spine);
+    var spine = new THREE.Mesh(new THREE.BoxGeometry(0.22, 3.40, 0.22), coverEdgeMaterial);
+    spine.position.set(0, 0, -0.10); bookGroup.add(spine);
     [-2.61, 2.61].forEach(function (x) {
-      var trim = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.055, 3.4), coverEdgeMaterial);
-      trim.position.set(x, -0.11, -0.08); bookGroup.add(trim);
+      var trim = new THREE.Mesh(new THREE.BoxGeometry(0.035, 3.30, 0.055), coverEdgeMaterial);
+      trim.position.set(x, 0, -0.11); bookGroup.add(trim);
     });
-    var lowerGilt = new THREE.Mesh(new THREE.BoxGeometry(5.05, 0.025, 3.35), coverEdgeMaterial);
-    lowerGilt.position.set(0, -0.045, -0.08); bookGroup.add(lowerGilt);
-    var pageBlock = new THREE.Mesh(new THREE.BoxGeometry(4.96, 0.075, 3.12), pageBlockMaterial);
-    pageBlock.position.set(0, -0.015, -0.05); bookGroup.add(pageBlock);
+    var lowerGilt = new THREE.Mesh(new THREE.BoxGeometry(5.05, 3.28, 0.025), coverEdgeMaterial);
+    lowerGilt.position.set(0, 0, -0.06); bookGroup.add(lowerGilt);
+    var pageBlock = new THREE.Mesh(new THREE.BoxGeometry(4.96, 3.12, 0.075), pageBlockMaterial);
+    pageBlock.position.set(0, 0, -0.005); bookGroup.add(pageBlock);
     for (var i = 0; i < 7; i++) {
-      var leaf = new THREE.Mesh(new THREE.BoxGeometry(4.88, 0.008, 3.08),
+      var leaf = new THREE.Mesh(new THREE.BoxGeometry(4.88, 3.08, 0.008),
         new THREE.MeshStandardMaterial({ color: i % 2 ? 0xd9c9a9 : 0xf4ead7, roughness: 0.98 }));
-      leaf.position.set(0, 0.026 + i * 0.006, -0.045);
+      leaf.position.set(0, 0, 0.045 + i * 0.006);
       bookGroup.add(leaf);
     }
 
@@ -1239,19 +1246,21 @@ html.no-webgl .stage{height:380px;min-height:380px}
     rightPage.position.set(1.24, 0.045, 0.18); bookGroup.add(rightPage);
 
     var coverLineMaterial = new THREE.MeshStandardMaterial({ color: 0xc6a66a, metalness: 0.78, roughness: 0.3 });
+    /* Thin gold frame on the navy base front, around the gilt — visible
+       in the navy border that shows around the pages. */
     var coverLines = [
-      { x: -1.31, y: -0.135, z: 1.53, w: 2.42, h: 0.018, d: 0.018 },
-      { x: 1.31, y: -0.135, z: 1.53, w: 2.42, h: 0.018, d: 0.018 },
-      { x: -2.49, y: -0.135, z: -0.08, w: 0.018, h: 0.018, d: 3.1 },
-      { x: 2.49, y: -0.135, z: -0.08, w: 0.018, h: 0.018, d: 3.1 }
+      { x: 0, y: 1.66, z: -0.06, w: 5.0, h: 0.018, d: 0.018 },
+      { x: 0, y: -1.66, z: -0.06, w: 5.0, h: 0.018, d: 0.018 },
+      { x: -2.56, y: 0, z: -0.06, w: 0.018, h: 3.24, d: 0.018 },
+      { x: 2.56, y: 0, z: -0.06, w: 0.018, h: 3.24, d: 0.018 }
     ];
     coverLines.forEach(function (o) {
       var m = new THREE.Mesh(new THREE.BoxGeometry(o.w, o.h, o.d), coverLineMaterial);
       m.position.set(o.x, o.y, o.z); bookGroup.add(m);
     });
-    var emblem = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.009, 8, 48), coverLineMaterial);
-    emblem.position.set(-1.31, -0.135, -0.08);
-    emblem.rotation.x = Math.PI / 2; bookGroup.add(emblem);
+    /* The old cover emblem sat on the flat front edge and has no home on
+       the vertical boards (the visible navy border is too thin for it);
+       it is deliberately dropped rather than left floating over a page. */
 
     var shadow = new THREE.Mesh(
       new THREE.CircleGeometry(2.65, 64),
@@ -1329,7 +1338,7 @@ html.no-webgl .stage{height:380px;min-height:380px}
   /* The canvas lives inside .stage now: size from the stage, book centred
      at world (0,0), camera always looking at (0,0,0) — it can never drift
      over the text above, because the canvas does not extend there. */
-  /* ChatGPT-book layout: flat FOV 34 (37 mobile), camera z 5.6 (6.0 mobile),
+  /* ChatGPT-book layout: flat FOV 34 (37 mobile), camera z 5.9 (6.3 mobile),
      book scale 1 (0.68 x / 1.12 y on narrow stages). The camera never moves
      and never looks at the book — it faces (0,0,0) straight on. */
   function layoutHero() {
@@ -1338,10 +1347,10 @@ html.no-webgl .stage{height:380px;min-height:380px}
     if (!w || !h) return;
     heroCamera.aspect = w / h;
     heroCamera.fov = w < 600 ? 37 : 34;
-    heroCamera.position.set(0, 0.15, w < 600 ? 6.0 : 5.6);
+    heroCamera.position.set(0, 0.15, w < 600 ? 6.3 : 5.9);
     heroCamera.updateProjectionMatrix();
     heroRenderer.setSize(w, h, false);
-    bookPos.set(0, 0, 0);
+    bookPos.set(0, 0.06, 0); /* lift so the taller vertical boards fit the frame */
     if (bookGroup) bookGroup.scale.set(w < 600 ? 0.68 : 1, w < 600 ? 1.12 : 1, 1);
   }
   if (heroCanvas) {
@@ -1390,19 +1399,27 @@ html.no-webgl .stage{height:380px;min-height:380px}
   }
 
   /* One shared loop; renders only scenes that are on screen, pauses when hidden. */
+  var rafId = null; /* id of the pending frame; null means no frame is
+     scheduled. If the chain is ever dropped, startLoop can tell and
+     restart it — a stuck flag alone must never freeze the medals. */
   function startLoop() {
-    if (loopRunning) return;
+    if (rafId !== null) return;
     loopRunning = true; lastTs = 0;
-    requestAnimationFrame(tick);
+    rafId = requestAnimationFrame(tick);
   }
   function tick(ts) {
-    if (!heroVisible && !medalsVisible) { loopRunning = false; return; }
+    rafId = null;
     if (document.hidden) { loopRunning = false; return; }
+    if (!heroVisible && !medalsVisible) { loopRunning = false; return; }
     if (lastTs) time += Math.min((ts - lastTs) / 1000, 0.05);
     lastTs = ts;
-    if (heroVisible && heroRenderer) updateHero(time);
-    if (medalsVisible && medalsRenderer) updateMedals(time);
-    requestAnimationFrame(tick);
+    try {
+      if (heroVisible && heroRenderer) updateHero(time);
+      if (medalsVisible && medalsRenderer) updateMedals(time);
+    } catch (err) {
+      /* One bad frame must never freeze the book or the medals. */
+    }
+    rafId = requestAnimationFrame(tick);
   }
 
   /* ---------- interactive page flipping (ChatGPT-book leaf) ---------- */
@@ -1491,9 +1508,22 @@ html.no-webgl .stage{height:380px;min-height:380px}
     if (medalsCanvas) {
       new IntersectionObserver(function (es) {
         medalsVisible = es[0].isIntersecting;
-        if (medalsVisible) startLoop();
+        if (medalsVisible) {
+          /* Paint a fresh angle immediately, then keep the loop running:
+             the strip must visibly turn even if the frame chain was
+             momentarily stalled when it scrolled into view. */
+          layoutMedals();
+          if (medalsRenderer) updateMedals(time);
+          startLoop();
+        }
       }, { threshold: 0 }).observe(medalsCanvas);
     }
+    /* Watchdog: if the frame chain ever dies while a scene is on screen,
+       restart it within a second. It renders nothing itself and never
+       runs while the tab is hidden, so off-screen pausing is preserved. */
+    setInterval(function () {
+      if (!document.hidden && (heroVisible || medalsVisible) && rafId === null) startLoop();
+    }, 1000);
     document.addEventListener('visibilitychange', function () {
       if (!document.hidden) startLoop();
     });
