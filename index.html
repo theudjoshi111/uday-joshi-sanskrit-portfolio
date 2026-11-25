@@ -1235,7 +1235,7 @@ html.webgl-on .stage .orbit{opacity:.7}
     if (heroPoints) { heroPoints.position.set(bookPos.x, bookPos.y, 0); heroPoints.rotation.y = t * 0.02; }
     heroCamera.position.x = mouseX * 0.7;
     heroCamera.position.y = 0.3 - mouseY * 0.35 + heroScroll * 0.4;
-    heroCamera.lookAt(bookPos.x, bookPos.y, 0);
+    heroCamera.lookAt(0, 0, 0); /* NOT bookPos: lookAt(bookPos) centres the book on screen */
     heroRenderer.render(heroScene, heroCamera);
   }
   function updateMedals(t) {
