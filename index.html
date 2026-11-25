@@ -203,7 +203,7 @@ h2.title{font-family:"Cormorant Garamond",serif;font-size:clamp(34px,4.6vw,52px)
 
 /* CONTACT */
 .contact-card{background:linear-gradient(160deg,var(--navy2),var(--navy));border-radius:26px;color:#fff;padding:44px 34px;text-align:center;box-shadow:var(--shadow);position:relative;overflow:hidden}
-.contact-card::after{content:"॥ शुभम् भवतु ॥";position:absolute;left:50%;transform:translateX(-50%);bottom:10px;font-family:"Tiro Devanagari Sanskrit",serif;color:rgba(232,217,174,.14);font-size:20px;white-space:nowrap}
+.contact-card::after{content:"॥ शुभम् भवतु ॥";position:absolute;left:50%;transform:translateX(-50%);bottom:10px;font-family:"Tiro Devanagari Sanskrit",serif;color:rgba(232,217,174,.55);font-size:22px;white-space:nowrap}
 .contact-card h2{font-family:"Cormorant Garamond",serif;font-size:clamp(34px,5vw,50px);margin:0 0 8px}
 .contact-card p{color:#c6cee2;margin:0 auto 8px;max-width:52ch}
 .contact-lines{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:20px 0 26px}
@@ -262,8 +262,7 @@ html.js-anim .hero .stage{animation-delay:.35s}
 .philosophy blockquote .w,.philosophy .verse2 .w{display:inline-block;opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease}
 .philosophy .in .w,.philosophy blockquote.in .w,.philosophy .verse2.in .w{opacity:1;transform:none}
 /* Language character reveal */
-.lang .ch{display:inline-block;opacity:0;transform:translateY(10px);transition:opacity .45s ease,transform .45s ease}
-.lang.in .ch{opacity:1;transform:none}
+.lang .ch{display:inline-block;opacity:1;transform:none}
 /* Manuscript lines behind philosophy */
 .philosophy{position:relative;overflow:hidden}
 .philosophy::before{content:"न हि ज्ञानेन सदृशं पवित्रमिह विद्यते \00a0 \00b7 \00a0 विद्या ददाति विनयम् \00a0 \00b7 \00a0 अभ्यासेन कौशलं वर्धते";position:absolute;left:0;right:0;bottom:8px;text-align:center;font-family:"Tiro Devanagari Sanskrit",serif;color:rgba(232,217,174,.07);font-size:15px;white-space:nowrap;pointer-events:none}
@@ -764,6 +763,7 @@ html.js-anim .hero .stage{animation-delay:.35s}
         if(!en.isIntersecting) return;
         cio.unobserve(en.target);
         var el = en.target;
+        if(el.dataset.counted) return; el.dataset.counted = '1';
         var m = el.textContent.match(/[0-9]+(?:\.[0-9]+)?/);
         if(!m) return; /* e.g. "Completed" — leave untouched */
         var target = parseFloat(m[0]);
@@ -813,16 +813,9 @@ html.js-anim .hero .stage{animation-delay:.35s}
     if(v2) pio.observe(v2);
   })();
 
-  /* Languages: native-script character reveal */
+  /* Languages: whole-word reveal only — NEVER split Indic text into
+     per-character spans, that breaks Devanagari/Gujarati shaping. */
   (function(){
-    document.querySelectorAll('.lang').forEach(function(card){
-      var span = card.querySelector('span');
-      if(!span || reduced) return;
-      var chars = Array.from(span.textContent);
-      span.innerHTML = chars.map(function(c, i){
-        return '<span class="ch" style="transition-delay:' + (i * 55) + 'ms">' + c + '</span>';
-      }).join('');
-    });
     var lio = new IntersectionObserver(function(entries){
       entries.forEach(function(en){ if(en.isIntersecting){ en.target.classList.add('in'); lio.unobserve(en.target); } });
     }, {threshold:.4});
