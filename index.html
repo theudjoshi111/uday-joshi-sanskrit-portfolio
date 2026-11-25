@@ -283,6 +283,18 @@ html.js-anim .hero .stage{animation-delay:.35s}
   #cursorDot,#cursorRing{display:none!important}
   .philosophy blockquote .w,.philosophy .verse2 .w,.lang .ch{opacity:1;transform:none;transition:none}
 }
+
+/* ---- Real WebGL layer (Three.js) ---- */
+#webglHero{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.hero-inner{position:relative;z-index:2}
+.hero .float-char{z-index:1}
+html.webgl-on .stage .book{visibility:hidden}
+html.webgl-on .stage .orbit{opacity:.7}
+.medals-3d{position:relative;height:200px;margin-top:26px;border-radius:22px;background:radial-gradient(600px 200px at 50% 0%,#24468c 0%,transparent 60%),linear-gradient(160deg,var(--navy2),var(--navy));overflow:hidden;box-shadow:var(--shadow)}
+.medals-3d canvas{width:100%;height:100%;display:block;pointer-events:none}
+.medals-note{position:absolute;left:0;right:0;bottom:10px;text-align:center;color:rgba(232,217,174,.75);font-size:11px;letter-spacing:.22em;font-weight:700;pointer-events:none}
+@media(max-width:900px){.medals-3d{height:160px}}
+@media (prefers-reduced-motion: reduce){#webglHero,#webglMedals{display:none}}
 </style>
 </head>
 <body>
@@ -313,6 +325,7 @@ html.js-anim .hero .stage{animation-delay:.35s}
 <!-- HERO -->
 <section class="hero" id="home" style="padding-top:132px">
   <canvas id="particles" aria-hidden="true"></canvas>
+  <canvas id="webglHero" aria-hidden="true"></canvas>
   <span class="float-char" style="left:6%;top:18%;font-size:64px">अ</span>
   <span class="float-char" style="right:4%;top:14%;font-size:52px;animation-delay:-3s">आ</span>
   <span class="float-char" style="left:46%;top:8%;font-size:40px;animation-delay:-5s">इ</span>
@@ -510,6 +523,10 @@ html.js-anim .hero .stage{animation-delay:.35s}
       <article class="award reveal"><div class="medal">1st</div><div><span class="rank">UNIVERSITY-LEVEL · 2017</span><h3>Shlokantyākṣarī Competition</h3><p>1st Rank — University-Level Shlokantyākṣarī</p></div></article>
       <article class="award reveal"><div class="medal">1st</div><div><span class="rank">UNIVERSITY-LEVEL · 2019</span><h3>Shlokantyākṣarī Competition</h3><p>1st Rank — University-Level Shlokantyākṣarī</p></div></article>
     </div>
+    <div class="medals-3d" aria-hidden="true">
+      <canvas id="webglMedals"></canvas>
+      <div class="medals-note">STATE &middot; UNIVERSITY &middot; HONOURS</div>
+    </div>
   </div>
 </section>
 
@@ -584,6 +601,7 @@ html.js-anim .hero .stage{animation-delay:.35s}
 
 <div class="toast" id="toast" role="status">Resume downloaded ✓</div>
 
+<script src="https://unpkg.com/three@0.152.2/build/three.min.js"></script>
 <script>
 (function(){
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -891,6 +909,382 @@ html.js-anim .hero .stage{animation-delay:.35s}
   document.getElementById('dlHero').addEventListener('click', downloadResume);
   document.getElementById('dlContact').addEventListener('click', downloadResume);
 })();
+</script>
+<script>
+/* Real WebGL layer — Three.js hero manuscript + achievement medals.
+   Guarded: if THREE or WebGL is unavailable, or reduced motion is on,
+   nothing runs and the existing CSS book / particles remain untouched.
+   NOTE: no Indic text is ever split into characters here. Every Sanskrit
+   string is drawn with a single canvas fillText() call, which preserves
+   Devanagari shaping. */
+(function () {
+  'use strict';
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var finePointer = window.matchMedia('(pointer:fine)').matches;
+  var isMobile = window.matchMedia('(max-width: 900px)').matches || !finePointer;
+  if (reduced) return;
+  if (!window.THREE) return;
+  var THREE = window.THREE;
+
+  function webglOK() {
+    try {
+      var c = document.createElement('canvas');
+      return !!(c.getContext('webgl') || c.getContext('experimental-webgl'));
+    } catch (e) { return false; }
+  }
+  if (!webglOK()) return;
+
+  /* ---------- canvas texture helpers (whole strings only) ---------- */
+  function makeCanvasTexture(w, h, draw) {
+    var cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    draw(cv.getContext('2d'), w, h);
+    var tex = new THREE.CanvasTexture(cv);
+    if (THREE.SRGBColorSpace) tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 4;
+    return tex;
+  }
+  function pageTexture(heading, lines) {
+    return makeCanvasTexture(512, 640, function (ctx, w, h) {
+      var g = ctx.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#fdfaf0'); g.addColorStop(1, '#efe4c6');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = '#c5a24a'; ctx.lineWidth = 6; ctx.strokeRect(14, 14, w - 28, h - 28);
+      ctx.strokeStyle = 'rgba(197,162,74,.5)'; ctx.lineWidth = 2; ctx.strokeRect(28, 28, w - 56, h - 56);
+      ctx.fillStyle = '#7a5c12'; ctx.textAlign = 'center';
+      ctx.font = '600 54px "Tiro Devanagari Sanskrit", serif';
+      ctx.fillText(heading, w / 2, 108);
+      ctx.strokeStyle = '#c5a24a'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(w / 2 - 70, 138); ctx.lineTo(w / 2 + 70, 138); ctx.stroke();
+      ctx.fillStyle = '#54451c';
+      ctx.font = '40px "Tiro Devanagari Sanskrit", serif';
+      lines.forEach(function (ln, i) { ctx.fillText(ln, w / 2, 210 + i * 62); });
+      ctx.strokeStyle = 'rgba(122,92,18,.28)'; ctx.lineWidth = 2;
+      for (var i = 0; i < 5; i++) {
+        var y = 440 + i * 30;
+        ctx.beginPath(); ctx.moveTo(70, y); ctx.lineTo(w - 70, y); ctx.stroke();
+      }
+      ctx.fillStyle = '#a8852f'; ctx.font = '28px "Tiro Devanagari Sanskrit", serif';
+      ctx.fillText('॥ शुभम् भवतु ॥', w / 2, h - 52);
+    });
+  }
+  function letterTexture(ch) {
+    return makeCanvasTexture(256, 256, function (ctx, w, h) {
+      ctx.clearRect(0, 0, w, h);
+      var g = ctx.createLinearGradient(0, 20, 0, h - 20);
+      g.addColorStop(0, '#f0d98c'); g.addColorStop(0.55, '#c5a24a'); g.addColorStop(1, '#a8852f');
+      ctx.fillStyle = g;
+      ctx.shadowColor = 'rgba(197,162,74,.55)'; ctx.shadowBlur = 14;
+      ctx.font = '150px "Tiro Devanagari Sanskrit", serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(ch, w / 2, h / 2 + 8);
+    });
+  }
+  function medalTexture(rank) {
+    return makeCanvasTexture(256, 256, function (ctx, w, h) {
+      var cx = w / 2, cy = h / 2, i, a;
+      var g = ctx.createRadialGradient(cx - 40, cy - 50, 10, cx, cy, 128);
+      g.addColorStop(0, '#f6e3a1'); g.addColorStop(0.55, '#c5a24a'); g.addColorStop(1, '#8f6d1f');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, 126, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.arc(cx, cy, 112, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = 'rgba(42,31,4,.55)'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(cx, cy, 98, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = 'rgba(42,31,4,.6)';
+      for (i = 0; i < 24; i++) {
+        a = (i / 24) * Math.PI * 2;
+        ctx.save(); ctx.translate(cx + Math.cos(a) * 105, cy + Math.sin(a) * 105); ctx.rotate(a + Math.PI / 4);
+        ctx.fillRect(-2, -7, 4, 14); ctx.restore();
+      }
+      ctx.fillStyle = '#2a1f04'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = '700 92px "Cormorant Garamond", serif';
+      ctx.fillText(rank, cx, cy - 8);
+      ctx.font = '700 22px Manrope, sans-serif';
+      ctx.fillText('RANK', cx, cy + 52);
+    });
+  }
+  function shadowTexture() {
+    return makeCanvasTexture(256, 128, function (ctx, w, h) {
+      var g = ctx.createRadialGradient(w / 2, h / 2, 6, w / 2, h / 2, w / 2);
+      g.addColorStop(0, 'rgba(0,0,0,.5)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    });
+  }
+
+  /* ---------- shared state ---------- */
+  var hero = document.querySelector('.hero');
+  var heroCanvas = document.getElementById('webglHero');
+  var stage = document.querySelector('.stage');
+  var medalsCanvas = document.getElementById('webglMedals');
+  if (!hero || !heroCanvas) return;
+
+  var heroVisible = false, medalsVisible = false, loopRunning = false;
+  var time = 0, lastTs = 0;
+  var mouseX = 0, mouseY = 0, targetMouseX = 0, targetMouseY = 0, heroScroll = 0;
+  var bookPos = new THREE.Vector3(1.4, 0, 0);
+  var bookScale = 1;
+
+  var heroRenderer, heroScene, heroCamera, bookGroup, heroPoints;
+  var turnPivots = [];
+  var letters = [];
+  var medalsRenderer, medalsScene, medalsCamera, medalGroups = [];
+
+  function addLights(scene) {
+    scene.add(new THREE.AmbientLight(0xfff2d0, 0.6));
+    var key = new THREE.DirectionalLight(0xffe9b0, 1.15); key.position.set(3, 4, 5); scene.add(key);
+    var rim = new THREE.DirectionalLight(0x7fa8ff, 0.55); rim.position.set(-4, 2, -3); scene.add(rim);
+    var goldPt = new THREE.PointLight(0xc5a24a, 0.5, 12); goldPt.position.set(0, 1.5, 2.5); scene.add(goldPt);
+  }
+
+  /* ---------- hero manuscript ---------- */
+  function buildHero() {
+    heroScene = new THREE.Scene();
+    heroCamera = new THREE.PerspectiveCamera(42, 1, 0.1, 60);
+    heroCamera.position.set(0, 0.3, 7.8);
+    heroRenderer = new THREE.WebGLRenderer({ canvas: heroCanvas, alpha: true, antialias: true, powerPreference: 'low-power' });
+    heroRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2));
+    if ('outputColorSpace' in heroRenderer && THREE.SRGBColorSpace) heroRenderer.outputColorSpace = THREE.SRGBColorSpace;
+    addLights(heroScene);
+
+    bookGroup = new THREE.Group();
+    var cover = new THREE.Mesh(
+      new THREE.BoxGeometry(3.7, 2.55, 0.1),
+      new THREE.MeshStandardMaterial({ color: 0x0d214d, roughness: 0.55, metalness: 0.25 })
+    );
+    cover.position.z = -0.09; bookGroup.add(cover);
+    var block = new THREE.Mesh(
+      new THREE.BoxGeometry(3.5, 2.4, 0.14),
+      new THREE.MeshStandardMaterial({ color: 0xf1e8cf, roughness: 0.85 })
+    );
+    bookGroup.add(block);
+
+    var pageMat = function (tex) {
+      return new THREE.MeshStandardMaterial({ map: tex, roughness: 0.8, metalness: 0.02 });
+    };
+    var leftTex = pageTexture('संस्कृतम्', ['न हि ज्ञानेन', 'सदृशं पवित्रम्', 'इह विद्यते ॥']);
+    var rightTex = pageTexture('ज्ञानम्', ['विद्या ददाति', 'विनयं, विनयाद्', 'याति पात्रताम् ॥']);
+    var leftPage = new THREE.Mesh(new THREE.PlaneGeometry(1.68, 2.32), pageMat(leftTex));
+    leftPage.position.set(-0.85, 0, 0.08); leftPage.rotation.y = -0.28; bookGroup.add(leftPage);
+    var rightPage = new THREE.Mesh(new THREE.PlaneGeometry(1.68, 2.32), pageMat(rightTex));
+    rightPage.position.set(0.85, 0, 0.08); rightPage.rotation.y = 0.28; bookGroup.add(rightPage);
+
+    /* Turning pages: hinged at the spine, front textured, back plain ivory.
+       They turn one way then back (cosine loop) so there is no visible reset. */
+    var turnTexs = [
+      pageTexture('संस्कृतम्', ['अक्षरम्', 'शब्दः', 'श्लोकः']),
+      pageTexture('ज्ञानम्', ['विद्या', 'अमृतम्', 'अश्नुते'])
+    ];
+    var plainMat = new THREE.MeshStandardMaterial({ color: 0xf6efdb, roughness: 0.85, side: THREE.DoubleSide });
+    turnTexs.forEach(function (tex, idx) {
+      var pivot = new THREE.Group();
+      pivot.position.set(0, 0, 0.1 + idx * 0.012);
+      var front = new THREE.Mesh(new THREE.PlaneGeometry(1.68, 2.32), pageMat(tex));
+      front.position.set(0.84, 0, 0);
+      var back = new THREE.Mesh(new THREE.PlaneGeometry(1.68, 2.32), plainMat);
+      back.position.set(0.84, 0, -0.012); back.rotation.y = Math.PI;
+      pivot.add(front); pivot.add(back);
+      pivot.userData.phase = idx * 1.3;
+      pivot.userData.speed = idx === 0 ? 0.785 : 0.571;
+      bookGroup.add(pivot); turnPivots.push(pivot);
+    });
+
+    /* Cheap fake floor shadow under the book */
+    var shadow = new THREE.Mesh(
+      new THREE.PlaneGeometry(4.6, 2.6),
+      new THREE.MeshBasicMaterial({ map: shadowTexture(), transparent: true, opacity: 0.55, depthWrite: false })
+    );
+    shadow.rotation.x = -Math.PI / 2; shadow.position.set(0, -1.7, -0.4);
+    bookGroup.add(shadow);
+
+    bookGroup.rotation.x = -0.06; bookGroup.rotation.y = -0.16;
+    heroScene.add(bookGroup);
+
+    /* Dimensional Devanagari letters: canvas texture on a thin box (real thickness) */
+    var letterDefs = [
+      { ch: 'अ', x: -2.45, y: 1.35, z: -0.9, s: 0.62 },
+      { ch: 'आ', x: 2.55, y: 1.45, z: -1.1, s: 0.58 },
+      { ch: 'इ', x: -2.75, y: -0.95, z: -0.4, s: 0.5 },
+      { ch: 'उ', x: 2.65, y: -1.05, z: 0.1, s: 0.54 },
+      { ch: 'ॐ', x: 0.1, y: 2.0, z: -1.5, s: 0.66 },
+      { ch: 'ज्ञ', x: 1.95, y: 0.4, z: -1.9, s: 0.6 }
+    ];
+    letterDefs.forEach(function (d, i) {
+      var tex = letterTexture(d.ch);
+      var face = new THREE.MeshStandardMaterial({ map: tex, transparent: true, roughness: 0.35, metalness: 0.55 });
+      var side = new THREE.MeshStandardMaterial({ color: 0x8a6d24, roughness: 0.35, metalness: 0.7 });
+      var mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(d.s, d.s, 0.14),
+        [side, side, side, side, face, face]
+      );
+      mesh.position.set(d.x, d.y, d.z);
+      mesh.userData = { bx: d.x, by: d.y, bz: d.z, phase: i * 1.1, speed: 0.35 + i * 0.06, baseRot: (i - 2.5) * 0.12 };
+      heroScene.add(mesh); letters.push(mesh);
+    });
+
+    /* Ink / gold dust particles */
+    var count = isMobile ? 40 : 120;
+    var pos = new Float32Array(count * 3);
+    for (var i = 0; i < count; i++) {
+      pos[i * 3] = (Math.random() - 0.5) * 7;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 4.4;
+      pos[i * 3 + 2] = -2 + Math.random() * 3;
+    }
+    var geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    heroPoints = new THREE.Points(geo, new THREE.PointsMaterial({
+      color: 0xe8d9ae, size: 0.055, transparent: true, opacity: 0.8, sizeAttenuation: true
+    }));
+    heroScene.add(heroPoints);
+  }
+
+  /* ---------- achievement medals ---------- */
+  function buildMedals() {
+    if (!medalsCanvas) return;
+    var wrap = medalsCanvas.parentElement;
+    medalsScene = new THREE.Scene();
+    medalsCamera = new THREE.PerspectiveCamera(40, 1, 0.1, 60);
+    medalsCamera.position.set(0, 0, 6.5);
+    medalsRenderer = new THREE.WebGLRenderer({ canvas: medalsCanvas, alpha: true, antialias: true, powerPreference: 'low-power' });
+    medalsRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2));
+    if ('outputColorSpace' in medalsRenderer && THREE.SRGBColorSpace) medalsRenderer.outputColorSpace = THREE.SRGBColorSpace;
+    addLights(medalsScene);
+    var ranks = ['3', '3', '1', '1'];
+    var xs = [-2.2, -0.75, 0.75, 2.2];
+    var faceGold = new THREE.MeshStandardMaterial({ color: 0xc5a24a, roughness: 0.3, metalness: 0.85 });
+    ranks.forEach(function (rank, i) {
+      var group = new THREE.Group();
+      var faceMat = new THREE.MeshStandardMaterial({ map: medalTexture(rank), roughness: 0.3, metalness: 0.75 });
+      var disc = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 0.14, 48), [faceGold, faceMat, faceMat]);
+      disc.rotation.x = Math.PI / 2;
+      group.add(disc);
+      var ring = new THREE.Mesh(
+        new THREE.TorusGeometry(0.72, 0.025, 12, 64),
+        new THREE.MeshStandardMaterial({ color: 0xc5a24a, roughness: 0.35, metalness: 0.8 })
+      );
+      group.add(ring);
+      group.position.set(xs[i], 0, 0);
+      group.userData = { bx: xs[i], phase: i * 1.1 };
+      medalsScene.add(group); medalGroups.push(group);
+    });
+    medalsCanvas._wrap = wrap;
+  }
+  function layoutMedals() {
+    if (!medalsRenderer || !medalsCanvas) return;
+    var wrap = medalsCanvas.parentElement;
+    var w = wrap.clientWidth, h = wrap.clientHeight;
+    if (!w || !h) return;
+    medalsCamera.aspect = w / h;
+    medalsCamera.position.z = w < 500 ? 8.2 : 6.5;
+    medalsCamera.updateProjectionMatrix();
+    medalsRenderer.setSize(w, h, false);
+    var s = w < 500 ? 0.62 : w < 800 ? 0.8 : 1;
+    medalGroups.forEach(function (g) { g.scale.setScalar(s); });
+  }
+
+  /* ---------- layout / interaction ---------- */
+  function layoutHero() {
+    if (!heroRenderer || !heroCamera) return;
+    var w = hero.clientWidth, h = hero.clientHeight;
+    if (!w || !h) return;
+    var aspect = w / h;
+    heroCamera.aspect = aspect;
+    heroCamera.position.z = Math.max(7.8, Math.min(13, 6.4 / Math.max(aspect, 0.25)));
+    heroCamera.updateProjectionMatrix();
+    heroRenderer.setSize(w, h, false);
+    if (stage) {
+      var hr = hero.getBoundingClientRect(), sr = stage.getBoundingClientRect();
+      var visH = 2 * Math.tan(THREE.MathUtils.degToRad(heroCamera.fov / 2)) * heroCamera.position.z;
+      var visW = visH * aspect;
+      bookPos.x = ((sr.left + sr.width / 2 - hr.left) / w - 0.5) * visW;
+      bookPos.y = (0.5 - (sr.top + sr.height / 2 - hr.top) / h) * visH;
+    }
+    bookScale = aspect < 0.75 ? 0.62 : aspect < 1.1 ? 0.8 : 1;
+    if (bookGroup) bookGroup.scale.setScalar(bookScale);
+  }
+  function updateHeroScroll() {
+    var r = hero.getBoundingClientRect();
+    heroScroll = Math.max(0, Math.min(1, -r.top / Math.max(r.height - window.innerHeight * 0.5, 1)));
+  }
+  if (finePointer) {
+    hero.addEventListener('mousemove', function (e) {
+      targetMouseX = e.clientX / window.innerWidth - 0.5;
+      targetMouseY = e.clientY / window.innerHeight - 0.5;
+    }, { passive: true });
+  }
+  window.addEventListener('resize', function () { layoutHero(); layoutMedals(); });
+  window.addEventListener('scroll', function () { updateHeroScroll(); }, { passive: true });
+
+  function updateHero(t) {
+    mouseX += (targetMouseX - mouseX) * 0.06;
+    mouseY += (targetMouseY - mouseY) * 0.06;
+    bookGroup.position.set(bookPos.x, bookPos.y + Math.sin(t * 0.6) * 0.09, 0);
+    bookGroup.rotation.y = -0.16 + mouseX * 0.3 + heroScroll * 0.55;
+    bookGroup.rotation.x = -0.06 + mouseY * 0.14;
+    bookGroup.rotation.z = Math.sin(t * 0.4) * 0.02;
+    turnPivots.forEach(function (p) {
+      p.rotation.y = -Math.PI * 0.92 * (0.5 - 0.5 * Math.cos(t * p.userData.speed + p.userData.phase));
+    });
+    letters.forEach(function (m) {
+      var u = m.userData;
+      m.position.set(bookPos.x + u.bx * bookScale, bookPos.y + u.by * bookScale + Math.sin(t * 0.7 + u.phase) * 0.12, u.bz);
+      m.rotation.y = u.baseRot + Math.sin(t * u.speed + u.phase) * 0.35;
+      m.rotation.x = Math.sin(t * 0.4 + u.phase) * 0.12;
+    });
+    if (heroPoints) { heroPoints.position.set(bookPos.x, bookPos.y, 0); heroPoints.rotation.y = t * 0.02; }
+    heroCamera.position.x = mouseX * 0.7;
+    heroCamera.position.y = 0.3 - mouseY * 0.35 + heroScroll * 0.4;
+    heroCamera.lookAt(bookPos.x, bookPos.y, 0);
+    heroRenderer.render(heroScene, heroCamera);
+  }
+  function updateMedals(t) {
+    medalGroups.forEach(function (g, i) {
+      g.position.y = Math.sin(t * 0.7 + g.userData.phase) * 0.08;
+      g.rotation.y = Math.sin(t * 0.45 + i * 0.9) * 0.5;
+      g.rotation.x = Math.sin(t * 0.3 + i) * 0.08;
+    });
+    medalsRenderer.render(medalsScene, medalsCamera);
+  }
+
+  /* One shared loop; renders only scenes that are on screen, pauses when hidden. */
+  function startLoop() {
+    if (loopRunning) return;
+    loopRunning = true; lastTs = 0;
+    requestAnimationFrame(tick);
+  }
+  function tick(ts) {
+    if (!heroVisible && !medalsVisible) { loopRunning = false; return; }
+    if (document.hidden) { loopRunning = false; return; }
+    if (lastTs) time += Math.min((ts - lastTs) / 1000, 0.05);
+    lastTs = ts;
+    if (heroVisible && heroRenderer) updateHero(time);
+    if (medalsVisible && medalsRenderer) updateMedals(time);
+    requestAnimationFrame(tick);
+  }
+
+  try {
+    buildHero();
+    buildMedals();
+    layoutHero(); layoutMedals(); updateHeroScroll();
+    document.documentElement.classList.add('webgl-on');
+    new IntersectionObserver(function (es) {
+      heroVisible = es[0].isIntersecting;
+      if (heroVisible) startLoop();
+    }, { threshold: 0 }).observe(hero);
+    if (medalsCanvas) {
+      new IntersectionObserver(function (es) {
+        medalsVisible = es[0].isIntersecting;
+        if (medalsVisible) startLoop();
+      }, { threshold: 0 }).observe(medalsCanvas);
+    }
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) startLoop();
+    });
+  } catch (err) {
+    /* Never break the page: fall back to the existing CSS book / medals. */
+    try { heroCanvas.remove(); if (medalsCanvas) medalsCanvas.remove(); } catch (e2) {}
+    document.documentElement.classList.remove('webgl-on');
+  }
+})();
+
 </script>
 </body>
 </html>
