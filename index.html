@@ -212,15 +212,84 @@ footer{padding:30px 20px 40px;text-align:center;color:var(--muted);font-size:13.
 footer .dev{color:var(--gold2);font-size:16px;display:block;margin-bottom:6px}
 .toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,80px);background:var(--navy);color:#fff;padding:13px 22px;border-radius:999px;font-weight:700;font-size:14px;z-index:200;transition:.35s;box-shadow:0 16px 34px rgba(0,0,0,.3);opacity:0}
 .toast.show{transform:translate(-50%,0);opacity:1}
+
+/* ---- Motion layer (added, content unchanged) ---- */
+html.js-anim .hero .verse, html.js-anim .hero .designation, html.js-anim .hero .tagline,
+html.js-anim .hero .sub, html.js-anim .hero .cta, html.js-anim .hero .hero-stats,
+html.js-anim .hero .stage{animation:heroRise .9s cubic-bezier(.2,.7,.2,1) backwards}
+html.js-anim .hero .verse{animation-delay:.05s}
+html.js-anim .hero .designation{animation-delay:.45s}
+html.js-anim .hero .tagline{animation-delay:.55s}
+html.js-anim .hero .sub{animation-delay:.65s}
+html.js-anim .hero .cta{animation-delay:.75s}
+html.js-anim .hero .hero-stats{animation-delay:.85s}
+html.js-anim .hero .stage{animation-delay:.35s}
+@keyframes heroRise{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+.hero h1 .h-word{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.08em;margin-bottom:-.08em}
+.hero h1 .h-word-in{display:inline-block;transform:translateY(112%);animation:heroWord .95s cubic-bezier(.2,.7,.2,1) forwards}
+.hero h1 .h-word:last-child .h-word-in{animation-delay:.18s}
+@keyframes heroWord{to{transform:none}}
+.hero h1{position:relative}
+.hero h1::after{content:"";display:block;height:2px;width:72px;background:var(--gold);margin-top:14px;border-radius:2px;transform-origin:left;animation:ruleGrow 1s .5s ease both}
+@keyframes ruleGrow{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:1}}
+/* Slow gentle sway of the manuscript book (keeps its rotateX) */
+.book{animation:bookSway 9s ease-in-out infinite}
+@keyframes bookSway{0%,100%{transform:rotateX(4deg) rotateY(-5deg)}50%{transform:rotateX(4deg) rotateY(5deg)}}
+.hero .float-char{animation-duration:11s}
+/* Custom cursor (desktop pointer only; JS adds the elements) */
+#cursorDot,#cursorRing{position:fixed;top:0;left:0;pointer-events:none;z-index:300;border-radius:50%;display:none}
+#cursorDot{width:7px;height:7px;background:var(--gold);transform:translate(-50%,-50%)}
+#cursorRing{width:34px;height:34px;border:1.5px solid rgba(197,162,74,.75);transform:translate(-50%,-50%);transition:width .25s,height .25s,border-color .25s,opacity .25s}
+#cursorRing.grow{width:52px;height:52px;border-color:rgba(197,162,74,1)}
+@media(pointer:fine){html.has-cursor #cursorDot,html.has-cursor #cursorRing{display:block}}
+/* 3D tilt targets */
+.tilt3d{transform-style:preserve-3d;transition:transform .3s ease,box-shadow .3s ease;will-change:transform}
+.panel.tilt3d:hover,.award.tilt3d:hover,.skill.tilt3d:hover,.lang.tilt3d:hover{box-shadow:0 26px 48px rgba(10,26,58,.18)}
+/* Timeline progress line + lit nodes */
+.timeline{position:relative}
+.tl-progress{position:absolute;left:7px;top:6px;width:2px;height:0;background:linear-gradient(180deg,var(--gold),#e6c877);z-index:1;transition:height .15s linear}
+.t-item{transition:transform .35s ease,box-shadow .35s ease}
+.t-item.lit{box-shadow:0 18px 40px rgba(10,26,58,.12)}
+.t-item.lit::before{background:var(--gold);box-shadow:0 0 0 5px rgba(197,162,74,.22)}
+/* Awards: rank pop + gold sheen on hover */
+.award{position:relative;overflow:hidden}
+.award .medal{transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+.award.in .medal{animation:medalPop .7s cubic-bezier(.2,.7,.2,1) both}
+@keyframes medalPop{0%{transform:scale(.6) rotate(-14deg);opacity:0}60%{transform:scale(1.08) rotate(3deg);opacity:1}100%{transform:scale(1) rotate(0)}}
+.award::after{content:"";position:absolute;top:0;left:-70%;width:45%;height:100%;background:linear-gradient(105deg,transparent,rgba(232,217,174,.16),transparent);transform:skewX(-18deg);transition:left .8s ease;pointer-events:none}
+.award:hover::after{left:130%}
+/* Philosophy shloka word reveal */
+.philosophy blockquote .w,.philosophy .verse2 .w{display:inline-block;opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease}
+.philosophy .in .w,.philosophy blockquote.in .w,.philosophy .verse2.in .w{opacity:1;transform:none}
+/* Language character reveal */
+.lang .ch{display:inline-block;opacity:0;transform:translateY(10px);transition:opacity .45s ease,transform .45s ease}
+.lang.in .ch{opacity:1;transform:none}
+/* Manuscript lines behind philosophy */
+.philosophy{position:relative;overflow:hidden}
+.philosophy::before{content:"न हि ज्ञानेन सदृशं पवित्रमिह विद्यते \00a0 \00b7 \00a0 विद्या ददाति विनयम् \00a0 \00b7 \00a0 अभ्यासेन कौशलं वर्धते";position:absolute;left:0;right:0;bottom:8px;text-align:center;font-family:"Tiro Devanagari Sanskrit",serif;color:rgba(232,217,174,.07);font-size:15px;white-space:nowrap;pointer-events:none}
+/* Contact / button micro-interactions */
+.contact-lines a{transition:transform .25s ease,border-color .25s ease,background .25s ease}
+.contact-lines a:hover{transform:translateY(-3px);border-color:var(--goldsoft);background:rgba(232,217,174,.12)}
+.btn:active{transform:translateY(1px) scale(.98)}
+.btn-gold:hover{transform:translateY(-2px);box-shadow:0 16px 30px rgba(197,162,74,.45)}
+/* Staggered reveal: delay is set inline by JS; keep the rise keyframe */
+@media(max-width:390px){.book{width:300px}.hero h1::after{width:56px}}
 @media (prefers-reduced-motion: reduce){
   html{scroll-behavior:auto}
-  .float-char,.orbit{animation:none}
+  .float-char,.orbit,.book{animation:none}
   .reveal.in{animation:none}
+  .hero h1 .h-word-in{transform:none;animation:none}
+  html.js-anim .hero .verse,html.js-anim .hero .designation,html.js-anim .hero .tagline,html.js-anim .hero .sub,html.js-anim .hero .cta,html.js-anim .hero .hero-stats,html.js-anim .hero .stage{animation:none}
+  .hero h1::after{animation:none}
+  #cursorDot,#cursorRing{display:none!important}
+  .philosophy blockquote .w,.philosophy .verse2 .w,.lang .ch{opacity:1;transform:none;transition:none}
 }
 </style>
 </head>
 <body>
 <div id="progress"></div>
+<div id="cursorDot" aria-hidden="true"></div>
+<div id="cursorRing" aria-hidden="true"></div>
 
 <header class="nav" id="topnav">
   <div class="bar">
@@ -519,6 +588,31 @@ footer .dev{color:var(--gold2);font-size:16px;display:block;margin-bottom:6px}
 <script>
 (function(){
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var finePointer = window.matchMedia('(pointer:fine)').matches;
+  if(!reduced) document.documentElement.classList.add('js-anim');
+  /* Hero name: wrap each word for a cinematic staggered reveal (text unchanged) */
+  (function(){
+    var h1 = document.querySelector('.hero h1');
+    if(!h1 || reduced) return;
+    var nodes = Array.prototype.slice.call(h1.childNodes);
+    h1.innerHTML = '';
+    nodes.forEach(function(n){
+      if(n.nodeType === 3){
+        var txt = n.textContent.trim();
+        if(!txt) return;
+        var w = document.createElement('span'); w.className = 'h-word';
+        var inn = document.createElement('span'); inn.className = 'h-word-in'; inn.textContent = txt;
+        w.appendChild(inn); h1.appendChild(w);
+      } else if(n.nodeType === 1 && n.tagName === 'BR'){
+        h1.appendChild(document.createElement('br'));
+      } else if(n.nodeType === 1){
+        var w2 = document.createElement('span'); w2.className = 'h-word';
+        var in2 = document.createElement('span'); in2.className = 'h-word-in'; in2.textContent = n.textContent;
+        if(n.tagName === 'SPAN') in2.style.color = 'var(--goldsoft)';
+        w2.appendChild(in2); h1.appendChild(w2);
+      }
+    });
+  })();
   document.getElementById('yr').textContent = new Date().getFullYear();
 
   /* Nav */
@@ -551,17 +645,25 @@ footer .dev{color:var(--gold2);font-size:16px;display:block;margin-bottom:6px}
 
   /* Reveal on scroll */
   var io = new IntersectionObserver(function(entries){
-    entries.forEach(function(en){ if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); } });
+    entries.forEach(function(en){
+      if(en.isIntersecting){
+        var sibs = en.target.parentElement ? Array.prototype.slice.call(en.target.parentElement.children).filter(function(c){ return c.classList && c.classList.contains('reveal'); }) : [];
+        var idx = sibs.indexOf(en.target);
+        if(idx > 0) en.target.style.animationDelay = (Math.min(idx, 4) * 90) + 'ms';
+        en.target.classList.add('in'); io.unobserve(en.target);
+      }
+    });
   }, {threshold:.12});
   document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
 
-  /* 3D tilt on education cards */
-  if(!reduced && window.matchMedia('(pointer:fine)').matches){
-    document.querySelectorAll('.tilt').forEach(function(card){
+  /* 3D tilt (max 6deg) on education, expertise, award, skill, language and about cards */
+  if(!reduced && finePointer){
+    document.querySelectorAll('.tilt, .panel, .award, .skill, .lang, .portrait-card, .pillar').forEach(function(card){
+      card.classList.add('tilt3d');
       card.addEventListener('mousemove', function(e){
         var r = card.getBoundingClientRect();
         var x = (e.clientX - r.left)/r.width - .5, y = (e.clientY - r.top)/r.height - .5;
-        card.style.transform = 'perspective(800px) rotateY('+(x*8)+'deg) rotateX('+(-y*8)+'deg) translateY(-3px)';
+        card.style.transform = 'perspective(900px) rotateY('+(x*6)+'deg) rotateX('+(-y*6)+'deg) translateY(-3px)';
         card.style.boxShadow = '0 22px 40px rgba(10,26,58,.14)';
       });
       card.addEventListener('mouseleave', function(){ card.style.transform=''; card.style.boxShadow=''; });
@@ -582,16 +684,150 @@ footer .dev{color:var(--gold2);font-size:16px;display:block;margin-bottom:6px}
     function size(){ W = canvas.width = canvas.offsetWidth; H = canvas.height = canvas.offsetHeight; }
     size(); window.addEventListener('resize', size);
     for(var i=0;i<55;i++) pts.push({x:Math.random(), y:Math.random(), r:Math.random()*1.8+.4, s:Math.random()*.00045+.00012, o:Math.random()*.5+.25});
-    (function loop(){
+    var rafId = null;
+    function loop(){
       ctx.clearRect(0,0,W,H);
       pts.forEach(function(p){
         p.y -= p.s; if(p.y < -0.02){ p.y = 1.02; p.x = Math.random(); }
         ctx.beginPath(); ctx.arc(p.x*W, p.y*H, p.r, 0, Math.PI*2);
         ctx.fillStyle = 'rgba(232,217,174,'+p.o+')'; ctx.fill();
       });
-      requestAnimationFrame(loop);
-    })();
+      rafId = requestAnimationFrame(loop);
+    }
+    function startParticles(){ if(rafId === null && !document.hidden) rafId = requestAnimationFrame(loop); }
+    function stopParticles(){ if(rafId !== null){ cancelAnimationFrame(rafId); rafId = null; } }
+    document.addEventListener('visibilitychange', function(){ document.hidden ? stopParticles() : startParticles(); });
+    new IntersectionObserver(function(es){ es[0].isIntersecting ? startParticles() : stopParticles(); }, {threshold:0}).observe(canvas);
+    startParticles();
   }
+
+  /* Custom cursor (desktop pointer only, never blocks clicks) */
+  if(!reduced && finePointer){
+    document.documentElement.classList.add('has-cursor');
+    var dot = document.getElementById('cursorDot'), ring = document.getElementById('cursorRing');
+    var mx = -100, my = -100, rx = -100, ry = -100;
+    document.addEventListener('mousemove', function(e){
+      mx = e.clientX; my = e.clientY;
+      dot.style.left = mx + 'px'; dot.style.top = my + 'px';
+    }, {passive:true});
+    (function ringLoop(){
+      rx += (mx - rx) * .16; ry += (my - ry) * .16;
+      ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+      requestAnimationFrame(ringLoop);
+    })();
+    document.querySelectorAll('a, button, .tilt3d').forEach(function(el){
+      el.addEventListener('mouseenter', function(){ ring.classList.add('grow'); });
+      el.addEventListener('mouseleave', function(){ ring.classList.remove('grow'); });
+    });
+  }
+
+  /* Hero mouse parallax: layers move at different depths (desktop only) */
+  if(!reduced && finePointer){
+    var heroEl = document.querySelector('.hero');
+    var heroInner = document.querySelector('.hero-inner');
+    var stage = document.querySelector('.stage');
+    var floats = document.querySelectorAll('.hero .float-char');
+    heroEl.addEventListener('mousemove', function(e){
+      var x = e.clientX / window.innerWidth - .5, y = e.clientY / window.innerHeight - .5;
+      if(heroInner) heroInner.style.transform = 'translate3d(' + (x * 8) + 'px,' + (y * 6) + 'px,0)';
+      if(stage) stage.style.transform = 'translate3d(' + (x * -12) + 'px,' + (y * -8) + 'px,0)';
+      floats.forEach(function(f, i){
+        var d = (i % 3 + 1) * 6;
+        f.style.marginLeft = (x * d) + 'px'; f.style.marginTop = (y * d) + 'px';
+      });
+    });
+  }
+
+  /* Experience timeline: gold progress line fills on scroll; nodes light up */
+  (function(){
+    var tl = document.querySelector('.timeline');
+    if(!tl) return;
+    var bar = document.createElement('div'); bar.className = 'tl-progress'; tl.appendChild(bar);
+    var items = tl.querySelectorAll('.t-item');
+    function fill(){
+      var r = tl.getBoundingClientRect();
+      var total = r.height - 12;
+      var done = Math.min(Math.max((window.innerHeight * .72 - r.top), 0), total);
+      bar.style.height = Math.max(done, 0) + 'px';
+      items.forEach(function(it){
+        if(it.getBoundingClientRect().top < window.innerHeight * .72) it.classList.add('lit');
+      });
+    }
+    window.addEventListener('scroll', fill, {passive:true}); window.addEventListener('resize', fill); fill();
+  })();
+
+  /* Education: animated percentage count-up (exact values only) */
+  (function(){
+    var scores = document.querySelectorAll('.edu .score');
+    var cio = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(!en.isIntersecting) return;
+        cio.unobserve(en.target);
+        var el = en.target;
+        var m = el.textContent.match(/[0-9]+(?:\.[0-9]+)?/);
+        if(!m) return; /* e.g. "Completed" — leave untouched */
+        var target = parseFloat(m[0]);
+        var decimals = (m[0].indexOf('.') >= 0) ? 2 : 0;
+        var suffix = el.querySelector('small');
+        var suffixHtml = suffix ? suffix.outerHTML : '';
+        var start = null;
+        function step(ts){
+          if(start === null) start = ts;
+          var k = Math.min((ts - start) / 1200, 1);
+          var eased = 1 - Math.pow(1 - k, 3);
+          el.innerHTML = (target * eased).toFixed(decimals) + suffixHtml;
+          if(k < 1) requestAnimationFrame(step);
+          else el.innerHTML = m[0] + suffixHtml;
+        }
+        if(!reduced) requestAnimationFrame(step);
+      });
+    }, {threshold:.5});
+    scores.forEach(function(s){ cio.observe(s); });
+  })();
+
+  /* Achievements: medal pop when an award card enters view */
+  (function(){
+    var aio = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){ if(en.isIntersecting){ en.target.classList.add('in'); aio.unobserve(en.target); } });
+    }, {threshold:.3});
+    document.querySelectorAll('.award').forEach(function(a){ aio.observe(a); });
+  })();
+
+  /* Philosophy shloka + quote: word-by-word reveal (text unchanged) */
+  (function(){
+    function splitWords(el){
+      if(!el || el.dataset.split) return;
+      el.dataset.split = '1';
+      var words = el.textContent.trim().split(/\s+/);
+      el.innerHTML = words.map(function(w, i){
+        return '<span class="w" style="transition-delay:' + (i * 70) + 'ms">' + w + '</span>';
+      }).join(' ');
+    }
+    var bq = document.querySelector('.philosophy blockquote');
+    var v2 = document.querySelector('.philosophy .verse2');
+    if(!reduced){ splitWords(bq); splitWords(v2); }
+    var pio = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){ if(en.isIntersecting){ en.target.classList.add('in'); pio.unobserve(en.target); } });
+    }, {threshold:.3});
+    if(bq) pio.observe(bq);
+    if(v2) pio.observe(v2);
+  })();
+
+  /* Languages: native-script character reveal */
+  (function(){
+    document.querySelectorAll('.lang').forEach(function(card){
+      var span = card.querySelector('span');
+      if(!span || reduced) return;
+      var chars = Array.from(span.textContent);
+      span.innerHTML = chars.map(function(c, i){
+        return '<span class="ch" style="transition-delay:' + (i * 55) + 'ms">' + c + '</span>';
+      }).join('');
+    });
+    var lio = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){ if(en.isIntersecting){ en.target.classList.add('in'); lio.unobserve(en.target); } });
+    }, {threshold:.4});
+    document.querySelectorAll('.lang').forEach(function(c){ lio.observe(c); });
+  })();
 
   /* Resume download — generated from the verified facts on this page */
   var RESUME = [
