@@ -287,6 +287,7 @@ html.js-anim .hero .stage{animation-delay:.35s}
 /* ---- Real WebGL layer (Three.js) ---- */
 #webglHero{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
 .hero-inner{position:relative;z-index:2}
+.hero h1,.hero .designation,.hero .tagline,.hero .sub{text-shadow:0 2px 18px rgba(6,14,36,.9),0 0 3px rgba(6,14,36,.65)}
 .hero .float-char{z-index:1}
 html.webgl-on .stage .book{visibility:hidden}
 html.webgl-on .stage .orbit{opacity:.7}
@@ -1100,12 +1101,12 @@ html.webgl-on .stage .orbit{opacity:.7}
 
     /* Dimensional Devanagari letters: canvas texture on a thin box (real thickness) */
     var letterDefs = [
-      { ch: 'अ', x: -2.45, y: 1.35, z: -0.9, s: 0.62 },
-      { ch: 'आ', x: 2.55, y: 1.45, z: -1.1, s: 0.58 },
-      { ch: 'इ', x: -2.75, y: -0.95, z: -0.4, s: 0.5 },
-      { ch: 'उ', x: 2.65, y: -1.05, z: 0.1, s: 0.54 },
+      { ch: 'अ', x: -1.85, y: 1.35, z: -0.9, s: 0.62 },
+      { ch: 'आ', x: 2.2, y: 1.45, z: -1.1, s: 0.58 },
+      { ch: 'इ', x: -2.0, y: -0.95, z: -0.4, s: 0.5 },
+      { ch: 'उ', x: 2.3, y: -1.05, z: 0.1, s: 0.54 },
       { ch: 'ॐ', x: 0.1, y: 2.0, z: -1.5, s: 0.66 },
-      { ch: 'ज्ञ', x: 1.95, y: 0.4, z: -1.9, s: 0.6 }
+      { ch: 'ज्ञ', x: 1.7, y: 0.4, z: -1.9, s: 0.6 }
     ];
     letterDefs.forEach(function (d, i) {
       var tex = letterTexture(d.ch);
@@ -1197,7 +1198,9 @@ html.webgl-on .stage .orbit{opacity:.7}
       bookPos.x = ((sr.left + sr.width / 2 - hr.left) / w - 0.5) * visW;
       bookPos.y = (0.5 - (sr.top + sr.height / 2 - hr.top) / h) * visH;
     }
-    bookScale = aspect < 0.75 ? 0.62 : aspect < 1.1 ? 0.8 : 1;
+    /* Keep the book on the right side: never let it drift over the text column. */
+    bookPos.x = Math.max(bookPos.x, 1.15);
+    bookScale = aspect < 0.75 ? 0.62 : aspect < 1.1 ? 0.8 : 0.82;
     if (bookGroup) bookGroup.scale.setScalar(bookScale);
   }
   function updateHeroScroll() {
