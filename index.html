@@ -85,7 +85,7 @@ nav.links a.active{color:var(--navy);background:var(--goldsoft)}
 
 /* 3D BOOK */
 .stage{position:relative;perspective:1200px;display:grid;place-items:center;height:480px;min-height:480px;max-width:1180px;margin:36px auto 0}
-@media(max-width:900px){.stage{height:380px;min-height:380px;margin-top:28px}}
+@media(max-width:900px){.stage{height:480px;min-height:480px;margin-top:28px}}
 .book-wrap{transform-style:preserve-3d;transition:transform .2s ease-out}
 .book{position:relative;width:320px;max-width:86vw;height:216px;transform-style:preserve-3d;transform:rotateX(4deg)}
 .page{position:absolute;top:0;width:160px;height:216px;background:linear-gradient(180deg,#fdfaf0,#f1e8cf);border:1px solid #d9c98f;box-shadow:inset 0 0 30px rgba(168,133,47,.15);padding:18px 16px;color:#3a2f14;overflow:hidden}
@@ -292,6 +292,22 @@ html.js-anim .hero .stage{animation-delay:.35s}
 .book-nav .btn:disabled{opacity:.4;cursor:default;transform:none}
 .book-page-ind{color:#aeb9d4;font-size:12px;letter-spacing:.18em;font-weight:700;min-width:120px;text-align:center}
 .book-hint{text-align:center;color:#aeb9d4;font-size:13px;margin:12px 0 0}
+/* ---- spread dots + reader panel (ChatGPT v11): the reader panel shows the
+   open spread in large HTML text — the readability guarantee on phones,
+   where the 3D book's texture text is small. ---- */
+.dots{display:flex;gap:8px;justify-content:center;margin-top:14px}
+.dots i{width:8px;height:8px;border-radius:50%;border:1px solid var(--gold);transition:background .3s,transform .3s}
+.dots i.on{background:var(--gold);transform:scale(1.25)}
+.reader{display:grid;grid-template-columns:1fr 1fr;gap:18px;width:100%;max-width:1180px;margin:28px auto 0;text-align:center}
+.reader .card{background:rgba(246,240,224,.045);border:1px solid rgba(197,162,74,.4);border-radius:4px;padding:26px 22px}
+.reader .card.sw{animation:swap .7s .5s both}
+.reader .card .pn{font-size:.9rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold)}
+.reader .card .sd{font-family:"Tiro Devanagari Sanskrit",serif;font-weight:600;font-size:clamp(1.3rem,3.6vw,1.8rem);line-height:1.75;margin:.7rem 0 1rem;color:var(--ivory)}
+.reader .card .hi{font-family:"Tiro Devanagari Sanskrit",serif;font-size:clamp(1rem,2.6vw,1.12rem);line-height:1.8;color:#e6dcc3;border-top:1px solid rgba(197,162,74,.3);padding-top:.9rem}
+.reader .card .hi b{color:var(--gold);font-weight:600;margin-right:.4em}
+.reader .card .en{font-style:italic;font-size:clamp(1.1rem,2.8vw,1.28rem);line-height:1.55;margin-top:.8rem;opacity:.92}
+@keyframes swap{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (max-width:700px){.reader{grid-template-columns:1fr}}
 .hero h1,.hero .designation,.hero .tagline,.hero .sub{text-shadow:0 2px 18px rgba(6,14,36,.9),0 0 3px rgba(6,14,36,.65)}
 .hero .float-char{z-index:1}
 html.webgl-on .stage .book{visibility:hidden}
@@ -316,7 +332,7 @@ html.no-webgl #webglHero{display:none}
 html.no-webgl .stage .book-wrap,html.no-webgl .stage .book-caption{display:none}
 html.no-webgl .stage{height:380px;min-height:380px}
 @media(max-width:900px){html.no-webgl .stage{height:300px;min-height:300px}.fallback-book{height:225px}.fallback-page{padding:14px 9px;gap:9px}}
-@media (prefers-reduced-motion: reduce){#webglHero,#webglMedals{display:none}}
+@media (prefers-reduced-motion: reduce){#webglHero,#webglMedals{display:none}.reader .card.sw{animation:none}}
 </style>
 </head>
 <body>
@@ -410,10 +426,15 @@ html.no-webgl .stage{height:380px;min-height:380px}
     </div>
     <div class="book-nav">
       <button class="btn btn-ghost" id="prevPage" type="button">← Previous page</button>
-      <span class="book-page-ind" id="pageInd">Pages 1–2 of 6</span>
+      <span class="book-page-ind" id="pageInd">Pages 1–2 of 14</span>
       <button class="btn btn-ghost" id="nextPage" type="button">Next page →</button>
     </div>
     <p class="book-hint">Click the book or use the buttons to turn the pages</p>
+    <div class="dots" id="dots" aria-hidden="true"></div>
+    <section class="reader" id="reader" aria-label="Shlokas on the open pages">
+      <article class="card" id="rc0"></article>
+      <article class="card" id="rc1"></article>
+    </section>
   </div>
 </section>
 
@@ -953,54 +974,59 @@ html.no-webgl .stage{height:380px;min-height:380px}
 })();
 </script>
 <script>
-/* Real WebGL layer — Three.js hero manuscript + achievement medals.
-   Guarded: if THREE or WebGL is unavailable, or reduced motion is on,
-   nothing runs and the existing CSS book / particles remain untouched.
-   NOTE: no Indic text is ever split into characters here. Every Sanskrit
-   string is drawn with a single canvas fillText() call, which preserves
-   Devanagari shaping. */
+/* ChatGPT v11 3D book + reader panel.
+   14 shlokas: the 13 from the ChatGPT v11 hero file, verbatim, plus
+   गुरुर्ब्रह्मा (14th) so the spread math is whole — 14 pages, 7 spreads.
+   l = Devanagari verse lines, h = Hindi meaning, e = English meaning.
+   Every Devanagari string is rendered whole-line — never split. */
 (function () {
   'use strict';
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var finePointer = window.matchMedia('(pointer:fine)').matches;
   var isMobile = window.matchMedia('(max-width: 900px)').matches || !finePointer;
-  /* Pages + fallback + flip controls are defined BEFORE the WebGL guards,
-     so the flippable static fallback works even when THREE/WebGL is missing
-     or reduced motion is on. Page texts are verbatim from the ChatGPT-built
-     hero file; Devanagari is drawn whole-line via fillText — never split. */
-  var PAGES = [
-    { num: "१", lines: ["विद्या ददाति विनयं", "विनयाद् याति पात्रताम् ।", "पात्रत्वाद् धनमाप्नोति", "धनाद् धर्मं ततः सुखम् ॥"],
-      meaning: "Education gives humility; humility brings worthiness; worthiness brings wealth; wealth brings dharma, and from that, happiness." },
-    { num: "२", lines: ["न हि ज्ञानेन सदृशं", "पवित्रमिह विद्यते ॥"],
-      meaning: "Nothing in this world purifies like knowledge." },
-    { num: "३", lines: ["न चोरहार्यं न च राजहार्यं", "न भ्रातृभाज्यं न च भारकारि ।", "व्यये कृते वर्धत एव नित्यं", "विद्याधनं सर्वधनप्रधानम् ॥"],
-      meaning: "It cannot be stolen, nor taken by kings, nor divided among brothers. Spent, it only grows — the wealth of knowledge is the highest of all wealth." },
-    { num: "४", lines: ["पुस्तकस्था तु या विद्या", "परहस्तगतं धनम् ।", "कार्यकाले समुत्पन्ने", "न सा विद्या न तद् धनम् ॥"],
-      meaning: "Knowledge that stays only in books, and wealth in another's hands, are of no use when the need arises." },
-    { num: "५", lines: ["श्रद्धावान् लभते ज्ञानं", "तत्परः संयतेन्द्रियः ।"],
-      meaning: "The faithful, devoted and self-controlled attain knowledge — and with it, supreme peace." },
-    { num: "६", lines: ["अज्ञानतिमिरान्धस्य", "ज्ञानाञ्जनशलाकया ।", "चक्षुरुन्मीलितं येन", "तस्मै श्रीगुरवे नमः ॥"],
-      meaning: "Salutations to the teacher who, with the collyrium of knowledge, opens eyes blinded by the darkness of ignorance." },
-  ];
-  var SPREADS = 3;
+
+  var SH = [{"l": ["विद्या ददाति विनयं", "विनयाद् याति पात्रताम् ।", "पात्रत्वाद् धनमाप्नोति", "धनाद् धर्मं ततः सुखम् ॥"], "h": "विद्या विनय देती है, विनय से पात्रता आती है, पात्रता से धन मिलता है, धन से धर्म और उससे सुख प्राप्त होता है।", "e": "Education gives humility; humility brings worthiness; worthiness brings wealth; wealth brings dharma, and from that, happiness."}, {"l": ["न हि ज्ञानेन सदृशं", "पवित्रमिह विद्यते ॥"], "h": "इस संसार में ज्ञान के समान पवित्र करने वाला कुछ भी नहीं है।", "e": "Nothing in this world purifies like knowledge."}, {"l": ["न चोरहार्यं न च राजहार्यं", "न भ्रातृभाज्यं न च भारकारि ।", "व्यये कृते वर्धत एव नित्यं", "विद्याधनं सर्वधनप्रधानम् ॥"], "h": "इसे न चोर चुरा सकता है, न राजा छीन सकता है, न भाई बाँट सकते हैं, और न यह बोझ बनता है। खर्च करने पर यह बढ़ता ही है — विद्या रूपी धन सब धनों में श्रेष्ठ है।", "e": "It cannot be stolen, nor taken by kings, nor divided among brothers. Spent, it only grows — the wealth of knowledge is the highest of all wealth."}, {"l": ["पुस्तकस्था तु या विद्या", "परहस्तगतं धनम् ।", "कार्यकाले समुत्पन्ने", "न सा विद्या न तद् धनम् ॥"], "h": "जो विद्या केवल पुस्तक में है और जो धन दूसरे के हाथ में है, आवश्यकता पड़ने पर न वह विद्या काम आती है, न वह धन।", "e": "Knowledge that stays only in books, and wealth in another's hands, are of no use when the need arises."}, {"l": ["श्रद्धावान् लभते ज्ञानं", "तत्परः संयतेन्द्रियः ।"], "h": "श्रद्धावान, तत्पर और संयमी मनुष्य ज्ञान प्राप्त करता है — और ज्ञान के साथ परम शान्ति पाता है।", "e": "The faithful, devoted and self-controlled attain knowledge — and with it, supreme peace."}, {"l": ["अज्ञानतिमिरान्धस्य", "ज्ञानाञ्जनशलाकया ।", "चक्षुरुन्मीलितं येन", "तस्मै श्रीगुरवे नमः ॥"], "h": "अज्ञान रूपी अंधकार से अंधे हुए की आँखें जिसने ज्ञान रूपी अंजन की शलाका से खोल दीं, उन श्री गुरु को नमस्कार।", "e": "Salutations to the teacher who, with the collyrium of knowledge, opens eyes blinded by the darkness of ignorance."}, {"l": ["विद्वत्त्वं च नृपत्वं च", "नैव तुल्यं कदाचन ।", "स्वदेशे पूज्यते राजा", "विद्वान् सर्वत्र पूज्यते ॥"], "h": "राजा और विद्वान की कभी बराबरी नहीं हो सकती। राजा केवल अपने देश में पूजा जाता है, पर विद्वान हर जगह सम्मान पाता है।", "e": "A king and a scholar are never equal. A king is honoured in his own land; a scholar is honoured everywhere."}, {"l": ["काकचेष्टा बकोध्यानं", "श्वाननिद्रा तथैव च ।", "अल्पाहारी गृहत्यागी", "विद्यार्थी पञ्चलक्षणम् ॥"], "h": "विद्यार्थी के पाँच लक्षण हैं: कौए जैसी सजगता, बगुले जैसा एकाग्र ध्यान, कुत्ते जैसी हल्की नींद, कम भोजन और घर के आराम से दूरी।", "e": "A student has five marks: the alertness of a crow, the focus of a crane, the light sleep of a dog, a modest appetite, and freedom from home comforts."}, {"l": ["सुखार्थी चेत् त्यजेद् विद्यां", "विद्यार्थी चेत् त्यजेत् सुखम् ।", "सुखार्थिनः कुतो विद्या", "कुतो विद्यार्थिनः सुखम् ॥"], "h": "जो सुख चाहता है वह विद्या का मोह छोड़े, और जो विद्या चाहता है वह सुख का मोह छोड़े। सुख चाहने वाले को विद्या कहाँ, और विद्यार्थी को सुख कहाँ?", "e": "One who seeks comfort must give up study; one who seeks study must give up comfort. Where is learning for the comfort-seeker, and comfort for the learner?"}, {"l": ["अलसस्य कुतो विद्या", "अविद्यस्य कुतो धनम् ।", "अधनस्य कुतो मित्रम्", "अमित्रस्य कुतः सुखम् ॥"], "h": "आलसी को विद्या कहाँ, बिना विद्या के धन कहाँ, बिना धन के मित्र कहाँ, और बिना मित्र के सुख कहाँ?", "e": "How can the lazy gain knowledge? Without knowledge, where is wealth? Without wealth, where are friends? Without friends, where is happiness?"}, {"l": ["सर्वद्रव्येषु विद्यैव", "द्रव्यमाहुरनुत्तमम् ।", "अहार्यत्वादनर्घत्वात्", "अक्षयत्वाच्च सर्वदा ॥"], "h": "सब प्रकार के धनों में विद्या ही सर्वोत्तम धन कही गई है, क्योंकि उसे चुराया नहीं जा सकता, उसका मूल्य आँका नहीं जा सकता और वह कभी नष्ट नहीं होती।", "e": "Of all possessions, knowledge alone is called supreme — it cannot be stolen, it is priceless, and it never perishes."}, {"l": ["नास्ति विद्यासमं चक्षुः", "नास्ति सत्यसमं तपः ।", "नास्ति रागसमं दुःखं", "नास्ति त्यागसमं सुखम् ॥"], "h": "विद्या के समान कोई नेत्र नहीं, सत्य के समान कोई तप नहीं, आसक्ति के समान कोई दुःख नहीं और त्याग के समान कोई सुख नहीं।", "e": "There is no eye like knowledge, no austerity like truth, no sorrow like attachment, and no joy like renunciation."}, {"l": ["अभिवादनशीलस्य", "नित्यं वृद्धोपसेविनः ।", "चत्वारि तस्य वर्धन्ते", "आयुर्विद्या यशो बलम् ॥"], "h": "जो नित्य बड़ों को प्रणाम करता और उनकी सेवा करता है, उसके चार गुण बढ़ते हैं: आयु, विद्या, यश और बल।", "e": "For one who humbly greets and serves the elders, four things grow: life, knowledge, fame and strength."}, {"l": ["गुरुर्ब्रह्मा गुरुर्विष्णुः", "गुरुर्देवो महेश्वरः ।", "गुरुः साक्षात् परब्रह्म", "तस्मै श्रीगुरवे नमः ॥"], "h": "गुरु ही ब्रह्मा हैं, गुरु ही विष्णु हैं, गुरु ही महेश्वर हैं, गुरु ही साक्षात् परब्रह्म हैं — उन श्री गुरु को नमस्कार।", "e": "The teacher is Brahma, the teacher is Vishnu, the teacher is Maheshvara; the teacher is the Supreme Brahman itself — salutations to the revered teacher."}];
+  var NP = SH.length; /* 14 */
+  var MAXS = NP / 2 - 1; /* 6 */
+  var SPREADS = MAXS + 1; /* 7 */
   var spread = 0;
   var bookMode = 'webgl'; /* 'fallback' when WebGL is unavailable */
   var prevBtn = document.getElementById('prevPage');
   var nextBtn = document.getElementById('nextPage');
   var pageInd = document.getElementById('pageInd');
+  var dotsEl = document.getElementById('dots');
+  var DEVA_NUM = '०१२३४५६७८९';
+  function devaNum(n) { return String(n).replace(/\d/g, function (d) { return DEVA_NUM[+d]; }); }
+
+  var dots = [];
+  if (dotsEl) {
+    for (var di = 0; di <= MAXS; di++) { var dot = document.createElement('i'); dotsEl.appendChild(dot); dots.push(dot); }
+  }
+
+  /* Reader panel: large HTML text of the open spread — the readability
+     guarantee on phones, where the 3D book's texture text is small. */
+  function reader() {
+    for (var k = 0; k < 2; k++) {
+      var n = spread * 2 + k, s = SH[n], el = document.getElementById('rc' + k);
+      if (!el || !s) continue;
+      el.innerHTML = '<div class="pn">श्लोक ' + devaNum(n + 1) + '</div><div class="sd">' + s.l.join('<br>') + '</div><p class="hi"><b>अर्थ</b>' + s.h + '</p><p class="en">' + s.e + '</p>';
+      el.classList.remove('sw'); void el.offsetWidth; el.classList.add('sw');
+    }
+  }
   function updateBookUI() {
-    if (pageInd) pageInd.textContent = 'Pages ' + (spread * 2 + 1) + '–' + (spread * 2 + 2) + ' of 6';
+    if (pageInd) pageInd.textContent = 'Pages ' + (spread * 2 + 1) + '–' + (spread * 2 + 2) + ' of ' + NP;
     if (prevBtn) prevBtn.disabled = (spread === 0);
-    if (nextBtn) nextBtn.disabled = (spread === SPREADS - 1);
+    if (nextBtn) nextBtn.disabled = (spread === MAXS);
+    dots.forEach(function (x, i) { x.className = i === spread ? 'on' : ''; });
   }
   function updateFallbackPages() {
-    var left = PAGES[spread * 2], right = PAGES[spread * 2 + 1];
+    var left = SH[spread * 2], right = SH[spread * 2 + 1];
     var set = function (id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
-    set('fallbackLeftShloka', left.lines.join('\n'));
-    set('fallbackLeftMeaning', left.meaning);
+    set('fallbackLeftShloka', left.l.join('\n'));
+    set('fallbackLeftMeaning', left.e);
     set('fallbackLeftNumber', String(spread * 2 + 1));
-    set('fallbackRightShloka', right.lines.join('\n'));
-    set('fallbackRightMeaning', right.meaning);
+    set('fallbackRightShloka', right.l.join('\n'));
+    set('fallbackRightMeaning', right.e);
     set('fallbackRightNumber', String(spread * 2 + 2));
   }
   function drawFallback() {
@@ -1008,18 +1034,29 @@ html.no-webgl .stage{height:380px;min-height:380px}
     document.documentElement.classList.add('no-webgl');
     updateFallbackPages();
     updateBookUI();
+    reader();
   }
   function turnFallback(dir) {
     var nt = spread + dir;
-    if (nt < 0 || nt > SPREADS - 1) return;
+    if (nt < 0 || nt > MAXS) return;
     spread = nt;
     updateFallbackPages();
     updateBookUI();
+    reader();
+  }
+  /* One spread change: clamp, update UI + reader immediately; the WebGL
+     leaves animate toward the new spread in the render loop. */
+  function setSpread(n) {
+    n = Math.max(0, Math.min(MAXS, n));
+    if (n === spread) return;
+    spread = n;
+    updateBookUI();
+    reader();
+    if (bookMode === 'fallback') updateFallbackPages();
   }
   function requestFlip(dir) {
     if (bookMode === 'fallback') turnFallback(dir);
-    else if (dir > 0) flipForward();
-    else flipBack();
+    else setSpread(spread + dir);
   }
   if (prevBtn) prevBtn.addEventListener('click', function () { requestFlip(-1); });
   if (nextBtn) nextBtn.addEventListener('click', function () { requestFlip(1); });
@@ -1041,6 +1078,15 @@ html.no-webgl .stage{height:380px;min-height:380px}
       if (Math.abs(dx) > 35) turnFallback(dx < 0 ? 1 : -1);
     }, { passive: true });
   }
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    if (bookMode === 'fallback') { requestFlip(e.key === 'ArrowRight' ? 1 : -1); return; }
+    if (!heroVisible) return;
+    requestFlip(e.key === 'ArrowRight' ? 1 : -1);
+  });
+  updateBookUI();
+  reader();
+
   if (reduced) { drawFallback(); return; }
   if (!window.THREE) { drawFallback(); return; }
   var THREE = window.THREE;
@@ -1064,72 +1110,59 @@ html.no-webgl .stage{height:380px;min-height:380px}
     tex.anisotropy = maxAniso;
     return tex;
   }
-  /* One page of the manuscript: a shloka (whole Devanagari strings, one
-     fillText per line — never split) plus its English meaning, wrapped. */
-  /* One page of the manuscript, ChatGPT-book rendering: 1024x1400 canvas,
-     paper grain, double gold border, corner ornaments, the verse centred
-     around y=450, divider, English meaning wrapped at 760px, page number
-     at the foot. The small gold "श्लोक N" heading sits at y=200, well above
-     the verse block (which starts at y>=298), so it never crowds it.
+  function wrap(g, txt, mw) {
+    var w = txt.split(' '), ls = [], c = '';
+    w.forEach(function (x) { var t = c ? c + ' ' + x : x; if (g.measureText(t).width > mw && c) { ls.push(c); c = x; } else c = t; });
+    if (c) ls.push(c); return ls;
+  }
+  /* One page texture, ChatGPT v11 rendering: 1024x1396 canvas, paper
+     grain, double gold border, corner ornaments, verse, divider, "अर्थ"
+     + Hindi, then the English meaning. The English is BOLD NON-ITALIC
+     near-black #14100a at 48px — never the pale italic that washed out
+     on minification. The fit loop shrinks the verse/Hindi only (k); the
+     English stays 48px, so nothing overflows and the meaning stays big.
      Every Sanskrit string is one fillText call — never split. */
-  function pageTexture(heading, lines, meaning, pageNo) {
-    return makeCanvasTexture(1024, 1400, function (ctx, w, h) {
-      ctx.fillStyle = '#f0e9d9'; ctx.fillRect(0, 0, w, h);
-      var seed = pageNo * 7919 + 43;
-      var rand = function () { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
-      var i;
-      for (i = 0; i < 2400; i++) {
-        ctx.fillStyle = 'rgba(95,72,42,' + (rand() * 0.055) + ')';
-        ctx.fillRect(rand() * w, rand() * h, 1.5, 1.5);
-      }
-      ctx.strokeStyle = 'rgba(153,119,65,.72)'; ctx.lineWidth = 5;
-      ctx.strokeRect(48, 48, w - 96, h - 96);
-      ctx.strokeStyle = 'rgba(153,119,65,.28)'; ctx.lineWidth = 2;
-      ctx.strokeRect(65, 65, w - 130, h - 130);
-      var corners = [[82, 82, 1, 1], [942, 82, -1, 1], [82, 1318, 1, -1], [942, 1318, -1, -1]];
-      ctx.strokeStyle = 'rgba(153,119,65,.7)'; ctx.lineWidth = 3;
-      corners.forEach(function (c) {
-        ctx.beginPath(); ctx.moveTo(c[0], c[1] + c[3] * 36); ctx.lineTo(c[0], c[1]); ctx.lineTo(c[0] + c[2] * 36, c[1]); ctx.stroke();
-      });
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#8a6d24';
-      ctx.font = '600 36px "Tiro Devanagari Sanskrit", serif';
-      ctx.fillText(heading, w / 2, 200);
-      ctx.strokeStyle = 'rgba(153,119,65,.6)'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(w / 2 - 60, 232); ctx.lineTo(w / 2 + 60, 232); ctx.stroke();
-      var maxVerseSize = lines.length >= 4 ? 43 : lines.length === 3 ? 48 : 54;
-      var longest = 0;
-      lines.forEach(function (ln) { longest = Math.max(longest, ln.length * 0.56); });
-      var verseSize = Math.max(34, Math.min(maxVerseSize, 780 / Math.max(1, longest)));
-      ctx.fillStyle = '#29261f';
-      ctx.font = '600 ' + verseSize + 'px "Tiro Devanagari Sanskrit", serif';
-      var lineHeight = Math.max(76, verseSize * 1.55);
-      var verseBlockHeight = lines.length * lineHeight;
-      var verseStartY = 440 - verseBlockHeight / 2;
-      lines.forEach(function (line, idx) { ctx.fillText(line, 512, verseStartY + idx * lineHeight, 820); });
-      var dividerY = Math.max(775, verseStartY + verseBlockHeight + 82);
-      ctx.strokeStyle = 'rgba(153,119,65,.66)'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(270, dividerY); ctx.lineTo(754, dividerY); ctx.stroke();
-      ctx.fillStyle = '#3a2c10';
-      ctx.font = '700 24px Manrope, sans-serif';
-      ctx.fillText('ENGLISH MEANING', 512, dividerY + 42);
-      ctx.fillStyle = '#14100a';
-      ctx.font = '700 48px Georgia, "Times New Roman", serif';
-      var words = meaning.split(/\s+/);
-      var meaningLines = [], line = '';
-      words.forEach(function (word) {
-        var test = line ? line + ' ' + word : word;
-        if (ctx.measureText(test).width > 780 && line) { meaningLines.push(line); line = word; }
-        else line = test;
-      });
-      if (line) meaningLines.push(line);
-      var meaningLineHeight = 62;
-      var meaningStartY = dividerY + 84;
-      meaningLines.slice(0, 7).forEach(function (ml, idx) { ctx.fillText(ml, 512, meaningStartY + idx * meaningLineHeight, 800); });
-      ctx.fillStyle = 'rgba(117,91,53,.78)';
-      ctx.font = '24px Georgia, serif';
-      ctx.fillText(String(pageNo), 512, 1300);
-    });
+  var TW = 1024, TH = 1396;
+  var DEVA = '"Tiro Devanagari Sanskrit","Nirmala UI",Mangal,serif';
+  var LAT = '"Cormorant Garamond",Georgia,serif';
+  function tex(n) {
+    var c = document.createElement('canvas'); c.width = TW; c.height = TH;
+    var g = c.getContext('2d'), left = (n % 2 === 1), s = SH[n - 1], cx = TW / 2;
+    g.fillStyle = '#f2e9d0'; g.fillRect(0, 0, TW, TH);
+    for (var i = 0; i < 1800; i++) { g.fillStyle = 'rgba(120,85,35,' + (Math.random() * 0.05) + ')'; g.fillRect(Math.random() * TW, Math.random() * TH, 2, 2); }
+    var v = g.createRadialGradient(cx, TH / 2, TH * 0.35, cx, TH / 2, TH * 0.75);
+    v.addColorStop(0, 'rgba(120,85,35,0)'); v.addColorStop(1, 'rgba(120,85,35,.2)'); g.fillStyle = v; g.fillRect(0, 0, TW, TH);
+    var gs = g.createLinearGradient(left ? TW : 0, 0, left ? TW - 170 : 170, 0);
+    gs.addColorStop(0, 'rgba(70,45,15,.4)'); gs.addColorStop(1, 'rgba(70,45,15,0)'); g.fillStyle = gs; g.fillRect(0, 0, TW, TH);
+    g.strokeStyle = '#b8975a'; g.lineWidth = 3; g.strokeRect(58, 58, TW - 116, TH - 116);
+    g.lineWidth = 1; g.strokeRect(72, 72, TW - 144, TH - 144);
+    g.fillStyle = '#b8975a'; g.beginPath(); g.moveTo(cx, 112); g.lineTo(cx + 14, 126); g.lineTo(cx, 140); g.lineTo(cx - 14, 126); g.closePath(); g.fill();
+    g.fillRect(cx - 90, 125, 60, 2); g.fillRect(cx + 30, 125, 60, 2);
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    var mw = TW - 230, top = 175, avail = TH - top - 175, k = 1, L;
+    for (; k > 0.5; k -= 0.04) {
+      var fs = (s.l.length > 3 ? 64 : 72) * k;
+      g.font = '600 ' + fs + 'px ' + DEVA;
+      while (fs > 30 && Math.max.apply(null, s.l.map(function (t) { return g.measureText(t).width; })) > mw) { fs -= 2; g.font = '600 ' + fs + 'px ' + DEVA; }
+      var hs = 36 * k, es = 48;
+      g.font = '500 ' + hs + 'px ' + DEVA; var hl = wrap(g, s.h, mw);
+      g.font = '700 ' + es + 'px ' + LAT; var el = wrap(g, s.e, mw);
+      L = { fs: fs, hs: hs, es: es, hl: hl, el: el, a: fs * 1.7, b: hs * 1.65, c: es * 1.35 };
+      L.tot = s.l.length * L.a + 50 + 40 + hl.length * L.b + 36 + el.length * L.c;
+      if (L.tot <= avail) break;
+    }
+    var y = top + (avail - L.tot) / 2 + L.a / 2;
+    g.fillStyle = '#1d2b4d'; g.font = '600 ' + L.fs + 'px ' + DEVA;
+    s.l.forEach(function (t) { g.fillText(t, cx, y); y += L.a; });
+    y += 2; g.fillStyle = '#b8975a'; g.fillRect(cx - 70, y, 140, 2); y += 40;
+    g.fillStyle = '#8a6f3c'; g.font = '600 ' + (L.hs * 0.85) + 'px ' + DEVA; g.fillText('अर्थ', cx, y); y += L.b * 0.9;
+    g.fillStyle = '#3a2410'; g.font = '500 ' + L.hs + 'px ' + DEVA;
+    L.hl.forEach(function (t) { g.fillText(t, cx, y); y += L.b; });
+    y += 24; g.fillStyle = '#14100a'; g.font = '700 ' + L.es + 'px ' + LAT;
+    L.el.forEach(function (t) { g.fillText(t, cx, y); y += L.c; });
+    g.fillStyle = '#8a6f3c'; g.font = '500 30px ' + LAT; g.fillText('— ' + n + ' —', cx, TH - 112);
+    var t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = Math.min(8, heroRenderer.capabilities.getMaxAnisotropy()); return t;
   }
   function medalTexture(rank) {
     return makeCanvasTexture(256, 256, function (ctx, w, h) {
@@ -1154,6 +1187,7 @@ html.no-webgl .stage{height:380px;min-height:380px}
       ctx.fillText('RANK', cx, cy + 52);
     });
   }
+
   /* ---------- shared state ---------- */
   var hero = document.querySelector('.hero');
   var heroCanvas = document.getElementById('webglHero');
@@ -1162,14 +1196,12 @@ html.no-webgl .stage{height:380px;min-height:380px}
   if (!hero || !heroCanvas) return;
 
   var heroVisible = false, medalsVisible = false, loopRunning = false;
-  var time = 0, lastTs = 0;
-  var pointerX = 0, pointerY = 0, tiltX = 0, tiltY = 0;
-  var bookPos = new THREE.Vector3(0, 0, 0);
-  var pageTexs = [];
-  var flipping = false, flipTarget = 0, flipDir = 0, flipStartT = 0;
-  var leftMat, rightMat, leftPage, rightPage, pageGeometry, flipPivot;
+  var time = 0, lastTs = 0, prevT = 0;
+  var mx = 0, my = 0, uy = 0, intro = 0;
+  var leaves = [], side = [];
+  var BOOK_W = 2.2, BOOK_H = 3.0, BOOK_NL = NP / 2 - 1;
 
-  var heroRenderer, heroScene, heroCamera, bookGroup, heroPoints, heroDrift;
+  var heroRenderer, heroScene, heroCamera, bookGroup, heroPoints, heroDrift, heroShadow;
   var medalsRenderer, medalsScene, medalsCamera, medalGroups = [];
 
   function addLights(scene) {
@@ -1179,117 +1211,107 @@ html.no-webgl .stage{height:380px;min-height:380px}
     var goldPt = new THREE.PointLight(0xc5a24a, 0.5, 12); goldPt.position.set(0, 1.5, 2.5); scene.add(goldPt);
   }
 
-  /* ---------- hero manuscript ---------- */
-  /* ---------- hero manuscript (ChatGPT book, transplanted) ---------- */
+  /* Page-curl leaf geometry (ChatGPT v11): a plane hinged at the spine,
+     curled across its width while it turns. */
+  function mkGeo(sd) {
+    var gg = new THREE.PlaneGeometry(BOOK_W, BOOK_H, 24, 1);
+    gg.translate(sd * BOOK_W / 2, 0, 0);
+    gg.userData.ox = Float32Array.from(gg.attributes.position.array.filter(function (_, k) { return k % 3 === 0; }));
+    return gg;
+  }
+  function place(L, i, e) {
+    var s = Math.sin(e * Math.PI); L.g.rotation.y = -e * Math.PI;
+    var zr = 0.012 + (BOOK_NL - 1 - i) * 0.012, zl = 0.012 + i * 0.012;
+    L.g.position.z = zr + (zl - zr) * e;
+    [[L.gf, 1], [L.gb, -1]].forEach(function (a) {
+      var pos = a[0].attributes.position, ox = a[0].userData.ox;
+      for (var k = 0; k < pos.count; k++) {
+        var u = Math.abs(ox[k]) / BOOK_W, bz = -0.42 * s * u * u + 0.16 * s * Math.sin(u * Math.PI);
+        pos.setZ(k, a[1] === 1 ? bz + 0.003 : -(bz - 0.003));
+      }
+      pos.needsUpdate = true; a[0].computeVertexNormals();
+    });
+  }
+
+  /* ---------- hero manuscript (ChatGPT v11 book) ---------- */
   function buildHero() {
+    var W = BOOK_W, H = BOOK_H, NL = BOOK_NL;
     heroScene = new THREE.Scene();
-    heroCamera = new THREE.PerspectiveCamera(34, 1, 0.1, 100);
-    heroCamera.position.set(0, 0.15, 10.2);
+    heroCamera = new THREE.PerspectiveCamera(33, 1, 0.1, 60);
     heroRenderer = new THREE.WebGLRenderer({ canvas: heroCanvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
     heroRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2));
     heroRenderer.setClearColor(0x000000, 0);
     if ('outputColorSpace' in heroRenderer && THREE.SRGBColorSpace) heroRenderer.outputColorSpace = THREE.SRGBColorSpace;
     heroRenderer.toneMapping = THREE.ACESFilmicToneMapping;
     heroRenderer.toneMappingExposure = 1.12;
+    heroScene.add(new THREE.AmbientLight(0xfff4e0, 0.78));
+    var dl = new THREE.DirectionalLight(0xffffff, 0.85); dl.position.set(3, 5, 6); heroScene.add(dl);
+    var rim = new THREE.DirectionalLight(0x6f8fd8, 0.35); rim.position.set(-5, 2, -3); heroScene.add(rim);
+    var pl = new THREE.PointLight(0xc2a367, 0.6, 12); pl.position.set(0, 0.5, 3.5); heroScene.add(pl);
 
-    /* ChatGPT-book lighting: bright ambient, warm key, cool fill, gold rim. */
-    heroScene.add(new THREE.AmbientLight(0xdce5ff, 1.35));
-    var keyLight = new THREE.DirectionalLight(0xffe8bd, 2.6);
-    keyLight.position.set(-3.5, 5, 6); heroScene.add(keyLight);
-    var fillLight = new THREE.PointLight(0x8da9d6, 1.5, 18);
-    fillLight.position.set(4, 1.5, 4); heroScene.add(fillLight);
-    var rimLight = new THREE.PointLight(0xc6a66a, 1.9, 15);
-    rimLight.position.set(0, -2.3, -2.5); heroScene.add(rimLight);
-
-    bookGroup = new THREE.Group();
-    heroScene.add(bookGroup);
-
-    var navyMaterial = new THREE.MeshStandardMaterial({ color: 0x0d2145, roughness: 0.62, metalness: 0.25 });
-    var coverEdgeMaterial = new THREE.MeshStandardMaterial({ color: 0x9d7b45, roughness: 0.35, metalness: 0.72 });
-    var pageBlockMaterial = new THREE.MeshStandardMaterial({ color: 0xe8ddc8, roughness: 0.94, metalness: 0 });
-
-    /* Vertical cover boards BEHIND the pages (front faces at z <= -0.07,
-       pages at z = 0.18). The old flat-lying slabs lay in the XZ plane
-       with front edges at z ~= 1.66, ~1.5 units IN FRONT of the pages, so
-       their navy front faces projected as a dark-blue horizontal band
-       across the divider / English-meaning zone of every page. No mesh
-       in this stack may sit in front of the page planes now. */
-    var base = new THREE.Mesh(new THREE.BoxGeometry(5.32, 3.40, 0.16), navyMaterial);
-    base.position.set(0, 0, -0.16); bookGroup.add(base);
-    [-1.31, 1.31].forEach(function (x) {
-      var cover = new THREE.Mesh(new THREE.BoxGeometry(2.62, 3.40, 0.13), navyMaterial);
-      cover.position.set(x, 0, -0.135); bookGroup.add(cover);
+    bookGroup = new THREE.Group(); heroScene.add(bookGroup);
+    var navyM = new THREE.MeshStandardMaterial({ color: 0x0c2148, roughness: 0.5, metalness: 0.2 });
+    var goldM = new THREE.MeshStandardMaterial({ color: 0xb8975a, roughness: 0.38, metalness: 0.6, emissive: 0x2a1f0a });
+    var edgeM = new THREE.MeshStandardMaterial({ color: 0xe3d6b2, roughness: 0.9 });
+    var ec = document.createElement('canvas'); ec.width = 4; ec.height = 64; var eg = ec.getContext('2d');
+    for (var yy = 0; yy < 64; yy += 2) { eg.fillStyle = yy % 4 ? '#e9ddbd' : '#cdbd96'; eg.fillRect(0, yy, 4, 2); }
+    var stripeM = new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(ec), roughness: 0.9 });
+    function box(par, w, h, d, x, y, z, m) { var b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); par.add(b); return b; }
+    [-1, 1].forEach(function (s) {
+      var cg = new THREE.Group(); bookGroup.add(cg);
+      box(cg, W + 0.14, H + 0.22, 0.07, s * (W / 2 + 0.03), 0, 0, navyM);
+      box(cg, W + 0.14, 0.03, 0.08, s * (W / 2 + 0.03), H / 2 + 0.1, 0, goldM);
+      box(cg, W + 0.14, 0.03, 0.08, s * (W / 2 + 0.03), -H / 2 - 0.1, 0, goldM);
+      box(cg, 0.03, H + 0.22, 0.08, s * (W + 0.085), 0, 0, goldM);
+      box(cg, W - 0.2, H - 0.2, 0.075, s * (W / 2 + 0.03), 0, 0, navyM);
+      var blk = new THREE.Mesh(new THREE.BoxGeometry(W + 0.02, H + 0.02, 1), [edgeM, edgeM, stripeM, stripeM, edgeM, edgeM]);
+      bookGroup.add(blk);
+      var ge = new THREE.Mesh(new THREE.BoxGeometry(0.025, H + 0.03, 1), goldM);
+      bookGroup.add(ge);
+      side.push({ cg: cg, blk: blk, ge: ge, s: s });
     });
-    var spine = new THREE.Mesh(new THREE.BoxGeometry(0.22, 3.40, 0.22), coverEdgeMaterial);
-    spine.position.set(0, 0, -0.10); bookGroup.add(spine);
-    [-2.61, 2.61].forEach(function (x) {
-      var trim = new THREE.Mesh(new THREE.BoxGeometry(0.035, 3.30, 0.055), coverEdgeMaterial);
-      trim.position.set(x, 0, -0.11); bookGroup.add(trim);
-    });
-    var lowerGilt = new THREE.Mesh(new THREE.BoxGeometry(5.05, 3.28, 0.025), coverEdgeMaterial);
-    lowerGilt.position.set(0, 0, -0.06); bookGroup.add(lowerGilt);
-    var pageBlock = new THREE.Mesh(new THREE.BoxGeometry(4.96, 3.12, 0.075), pageBlockMaterial);
-    pageBlock.position.set(0, 0, -0.005); bookGroup.add(pageBlock);
-    for (var i = 0; i < 7; i++) {
-      var leaf = new THREE.Mesh(new THREE.BoxGeometry(4.88, 3.08, 0.008),
-        new THREE.MeshStandardMaterial({ color: i % 2 ? 0xd9c9a9 : 0xf4ead7, roughness: 0.98 }));
-      leaf.position.set(0, 0, 0.045 + i * 0.006);
-      bookGroup.add(leaf);
+    box(bookGroup, 0.16, H + 0.22, 0.34, 0, 0, -0.17, navyM);
+    box(bookGroup, 0.04, H + 0.24, 0.35, 0, 0, -0.17, goldM);
+
+    function pm(t) { return new THREE.MeshStandardMaterial({ map: t, roughness: 0.9 }); }
+    var T = [];
+    for (var i = 1; i <= NP; i++) T.push(tex(i));
+    var p1 = new THREE.Mesh(new THREE.PlaneGeometry(W, H), pm(T[0]));
+    p1.position.set(-W / 2, 0, 0); bookGroup.add(p1);
+    var pN = new THREE.Mesh(new THREE.PlaneGeometry(W, H), pm(T[NP - 1]));
+    pN.position.set(W / 2, 0, 0); bookGroup.add(pN);
+
+    for (var li = 0; li < NL; li++) {
+      var grp = new THREE.Group(), gf = mkGeo(1), gb = mkGeo(-1);
+      var f = new THREE.Mesh(gf, pm(T[1 + 2 * li])), b = new THREE.Mesh(gb, pm(T[2 + 2 * li]));
+      b.rotation.y = Math.PI; grp.add(f, b); bookGroup.add(grp);
+      var Lf = { g: grp, gf: gf, gb: gb, p: 0, e: -1 };
+      leaves.push(Lf); place(Lf, li, 0);
     }
 
-    /* Six pages, cached once; the two static pages show the current spread. */
-    pageTexs = PAGES.map(function (p, idx) { return pageTexture('श्लोक ' + p.num, p.lines, p.meaning, idx + 1); });
-    leftMat = new THREE.MeshStandardMaterial({ map: pageTexs[0], roughness: 0.91, metalness: 0 });
-    rightMat = new THREE.MeshStandardMaterial({ map: pageTexs[1], roughness: 0.91, metalness: 0 });
-    pageGeometry = new THREE.PlaneGeometry(2.48, 3.13);
-    leftPage = new THREE.Mesh(pageGeometry, leftMat);
-    leftPage.position.set(-1.24, 0.045, 0.18); bookGroup.add(leftPage);
-    rightPage = new THREE.Mesh(pageGeometry, rightMat);
-    rightPage.position.set(1.24, 0.045, 0.18); bookGroup.add(rightPage);
-
-    var coverLineMaterial = new THREE.MeshStandardMaterial({ color: 0xc6a66a, metalness: 0.78, roughness: 0.3 });
-    /* Thin gold frame on the navy base front, around the gilt — visible
-       in the navy border that shows around the pages. */
-    var coverLines = [
-      { x: 0, y: 1.66, z: -0.06, w: 5.0, h: 0.018, d: 0.018 },
-      { x: 0, y: -1.66, z: -0.06, w: 5.0, h: 0.018, d: 0.018 },
-      { x: -2.56, y: 0, z: -0.06, w: 0.018, h: 3.24, d: 0.018 },
-      { x: 2.56, y: 0, z: -0.06, w: 0.018, h: 3.24, d: 0.018 }
-    ];
-    coverLines.forEach(function (o) {
-      var m = new THREE.Mesh(new THREE.BoxGeometry(o.w, o.h, o.d), coverLineMaterial);
-      m.position.set(o.x, o.y, o.z); bookGroup.add(m);
-    });
-    /* The old cover emblem sat on the flat front edge and has no home on
-       the vertical boards (the visible navy border is too thin for it);
-       it is deliberately dropped rather than left floating over a page. */
-
-    var shadow = new THREE.Mesh(
-      new THREE.CircleGeometry(2.65, 64),
-      new THREE.MeshBasicMaterial({ color: 0x020814, transparent: true, opacity: 0.29, depthWrite: false })
-    );
-    shadow.scale.set(1.2, 0.42, 1);
-    shadow.position.set(0, -1.72, -0.55);
-    bookGroup.add(shadow);
-
-    /* Floating antique-gold dust, sparse and slow (ChatGPT book: 92). */
-    var count = 92;
-    var pos = new Float32Array(count * 3);
-    heroDrift = new Float32Array(count);
-    for (var j = 0; j < count; j++) {
-      pos[j * 3] = (Math.random() - 0.5) * 8.2;
-      pos[j * 3 + 1] = (Math.random() - 0.5) * 4.2;
-      pos[j * 3 + 2] = (Math.random() - 0.5) * 2.4 - 0.3;
-      heroDrift[j] = 0.0015 + Math.random() * 0.0035;
+    function blob(a, col) {
+      var cc = document.createElement('canvas'); cc.width = cc.height = 128;
+      var gg = cc.getContext('2d'), q = gg.createRadialGradient(64, 64, 0, 64, 64, 64);
+      q.addColorStop(0, 'rgba(' + col + ',' + a + ')'); q.addColorStop(1, 'rgba(' + col + ',0)');
+      gg.fillStyle = q; gg.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(cc);
     }
-    var geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    heroPoints = new THREE.Points(geo, new THREE.PointsMaterial({
-      color: 0xd7bd85, size: 0.027, transparent: true, opacity: 0.68, sizeAttenuation: true, depthWrite: false
-    }));
+    var sh = new THREE.Mesh(new THREE.PlaneGeometry(7.8, 2.8), new THREE.MeshBasicMaterial({ map: blob(0.6, '0,0,0'), transparent: true, depthWrite: false }));
+    sh.rotation.x = -Math.PI / 2; sh.position.set(0, -2.6, 0.2); heroScene.add(sh);
+    heroShadow = sh;
+    var glow = new THREE.Mesh(new THREE.PlaneGeometry(10, 7.5), new THREE.MeshBasicMaterial({ map: blob(0.2, '194,163,103'), transparent: true, depthWrite: false }));
+    glow.position.set(0, 0.2, -2); heroScene.add(glow);
+
+    var N = 170, pp = new Float32Array(N * 3), ph = [];
+    for (var q = 0; q < N; q++) {
+      pp[q * 3] = (Math.random() - 0.5) * 10; pp[q * 3 + 1] = (Math.random() - 0.5) * 6.4; pp[q * 3 + 2] = (Math.random() - 0.3) * 5;
+      ph.push([Math.random() * 6.28, 0.1 + Math.random() * 0.28]);
+    }
+    var pgeo = new THREE.BufferGeometry();
+    pgeo.setAttribute('position', new THREE.BufferAttribute(pp, 3));
+    heroPoints = new THREE.Points(pgeo, new THREE.PointsMaterial({ size: 0.09, map: blob(1, '214,184,116'), transparent: true, opacity: 0.8, depthWrite: false }));
     heroScene.add(heroPoints);
-
-    bookGroup.rotation.x = -0.035; bookGroup.rotation.y = -0.055;
+    heroDrift = ph;
+    intro = 0;
   }
 
   /* ---------- achievement medals ---------- */
@@ -1337,57 +1359,83 @@ html.no-webgl .stage{height:380px;min-height:380px}
   }
 
   /* ---------- layout / interaction ---------- */
-  /* The canvas lives inside .stage now: size from the stage, book centred
-     at world (0,0), camera always looking at (0,0,0) — it can never drift
-     over the text above, because the canvas does not extend there. */
-  /* ChatGPT-book layout: flat FOV 34 (37 mobile), camera z 5.9 (6.3 mobile),
-     book scale 1 (0.68 x / 1.12 y on narrow stages). The camera never moves
-     and never looks at the book — it faces (0,0,0) straight on. */
+  /* The canvas lives inside .stage: size from the stage, book centred at
+     world (0,0), camera always looking at (0,0,0) — it can never drift
+     over the text above, because the canvas does not extend there.
+     ChatGPT v11 layout: FOV 33, camera distance from the stage aspect. */
   function layoutHero() {
     if (!heroRenderer || !heroCamera || !stage) return;
     var w = stage.clientWidth, h = stage.clientHeight;
     if (!w || !h) return;
-    heroCamera.aspect = w / h;
-    heroCamera.fov = w < 600 ? 37 : 34;
-    heroCamera.position.set(0, 0.15, w < 600 ? 6.3 : 5.9);
-    heroCamera.updateProjectionMatrix();
     heroRenderer.setSize(w, h, false);
-    bookPos.set(0, 0.06, 0); /* lift so the taller vertical boards fit the frame */
-    if (bookGroup) bookGroup.scale.set(w < 600 ? 0.68 : 1, w < 600 ? 1.12 : 1, 1);
+    heroCamera.aspect = w / h;
+    var t = 2 * Math.tan(heroCamera.fov * Math.PI / 360), d = Math.max(3.9 / t, 5.0 / (heroCamera.aspect * t));
+    heroCamera.position.set(0, 0.5, d);
+    heroCamera.lookAt(0, 0, 0);
+    heroCamera.updateProjectionMatrix();
   }
   if (heroCanvas) {
+    var swipeX = null, swipeY = null;
     heroCanvas.addEventListener('pointermove', function (e) {
       var r = heroCanvas.getBoundingClientRect();
-      pointerX = ((e.clientX - r.left) / r.width - 0.5) * 2;
-      pointerY = ((e.clientY - r.top) / r.height - 0.5) * 2;
+      mx = (e.clientX - r.left) / r.width - 0.5;
+      my = (e.clientY - r.top) / r.height - 0.5;
     });
-    heroCanvas.addEventListener('pointerleave', function () { pointerX = 0; pointerY = 0; });
+    heroCanvas.addEventListener('pointerleave', function () { mx = my = 0; });
+    heroCanvas.addEventListener('pointerdown', function (e) { swipeX = e.clientX; swipeY = e.clientY; });
+    heroCanvas.addEventListener('pointerup', function (e) {
+      if (swipeX === null) return;
+      var dx = e.clientX - swipeX, dy = e.clientY - swipeY;
+      swipeX = null; swipeY = null;
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) { requestFlip(dx < 0 ? 1 : -1); return; }
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) {
+        var r = heroCanvas.getBoundingClientRect();
+        requestFlip((e.clientX - r.left) / r.width >= 0.5 ? 1 : -1);
+      }
+    });
   }
   window.addEventListener('resize', function () { layoutHero(); layoutMedals(); });
 
+  function ease(p) { return p * p * (3 - 2 * p); }
   function updateHero(t) {
-    /* ChatGPT-book motion: gentle bob, tiny lerped mouse tilt, slow sway.
-       No scroll rotation, no camera movement — the pages stay face-on. */
-    tiltX += ((pointerY * 0.045) - tiltX) * 0.035;
-    tiltY += ((pointerX * 0.07) - tiltY) * 0.035;
-    bookGroup.position.set(bookPos.x, bookPos.y + Math.sin(t * 0.72) * 0.035, 0);
-    bookGroup.rotation.x = -0.035 + tiltX;
-    bookGroup.rotation.y = -0.055 + tiltY + Math.sin(t * 0.32) * 0.018;
+    var dt = prevT ? Math.min(t - prevT, 0.05) : 0.016;
+    prevT = t;
+    /* Page-curl leaves animate toward the current spread (1.2s); the
+       spread itself changes instantly in setSpread, so rapid flips
+       simply retarget the leaves instead of dropping clicks. */
+    var DUR = 1.2, cnt = 0;
+    leaves.forEach(function (L, i) {
+      var tg = i < spread ? 1 : 0;
+      if (L.p !== tg) { L.p += Math.sign(tg - L.p) * dt / DUR; if (Math.abs(tg - L.p) < dt / DUR) L.p = tg; }
+      var e = ease(L.p);
+      if (e !== L.e) { L.e = e; place(L, i, e); }
+      cnt += e;
+    });
+    side.forEach(function (S) {
+      var n = S.s < 0 ? cnt : BOOK_NL - cnt, dp = 0.04 + 0.014 * n;
+      S.blk.scale.z = dp; S.blk.position.z = -dp / 2 - 0.006;
+      S.ge.scale.z = dp; S.ge.position.z = -dp / 2 - 0.006;
+      S.ge.position.x = S.s * (BOOK_W + 0.005);
+      S.cg.position.z = -dp - 0.04;
+    });
+    if (intro < 1) intro = Math.min(1, intro + dt / 1.8);
+    var k = ease(intro), bob = Math.sin(t * 1.1) * 0.07;
+    uy += ((mx * 0.3) - uy) * 0.06;
+    bookGroup.scale.setScalar(0.72 + 0.28 * k);
+    bookGroup.position.y = bob;
+    bookGroup.rotation.y = uy - (1 - k) * 0.9;
+    /* Flatter than v11's -0.5: the pages face the viewer more directly
+       so the verse and meanings read instead of foreshortening away. */
+    bookGroup.rotation.x += ((-0.18 + my * 0.12 - (1 - k) * 0.3) - bookGroup.rotation.x) * 0.08;
+    if (heroShadow) heroShadow.material.opacity = (1 - bob * 1.5) * k;
     if (heroPoints) {
-      heroPoints.rotation.y = Math.sin(t * 0.12) * 0.035;
-      var arr = heroPoints.geometry.attributes.position.array;
-      for (var i = 0; i < 92; i++) {
-        arr[i * 3 + 1] += heroDrift[i];
-        arr[i * 3] += Math.sin(t * 0.35 + i) * 0.0005;
-        if (arr[i * 3 + 1] > 2.7) arr[i * 3 + 1] = -2.7;
+      var a = heroPoints.geometry.attributes.position.array;
+      for (var j = 0; j < 170; j++) {
+        a[j * 3 + 1] += heroDrift[j][1] * dt;
+        a[j * 3] += Math.sin(t * 0.6 + heroDrift[j][0]) * 0.004;
+        if (a[j * 3 + 1] > 3.3) a[j * 3 + 1] = -3.3;
       }
       heroPoints.geometry.attributes.position.needsUpdate = true;
-    }
-    if (flipping && flipPivot) {
-      var raw = Math.min(1, (t - flipStartT) / 0.92);
-      var e = raw < 0.5 ? 4 * raw * raw * raw : 1 - Math.pow(-2 * raw + 2, 3) / 2;
-      flipPivot.rotation.y = flipDir > 0 ? -Math.PI * e : Math.PI * e;
-      if (raw >= 1) finishFlip();
     }
     heroRenderer.render(heroScene, heroCamera);
   }
@@ -1424,119 +1472,57 @@ html.no-webgl .stage{height:380px;min-height:380px}
     rafId = requestAnimationFrame(tick);
   }
 
-  /* ---------- interactive page flipping (ChatGPT-book leaf) ---------- */
-  function setSpread(s) {
-    spread = s;
-    if (leftMat) { leftMat.map = pageTexs[s * 2]; leftMat.needsUpdate = true; }
-    if (rightMat) { rightMat.map = pageTexs[s * 2 + 1]; rightMat.needsUpdate = true; }
-    updateBookUI();
-  }
-  /* One turning leaf, built fresh per flip like the ChatGPT book: two
-     planes (front = page being turned, back = page that lands), hinged
-     at the spine, eased over 920ms. */
-  function makeFlip(dir) {
-    var target = spread + dir;
-    var forward = dir > 0;
-    var frontIndex = forward ? spread * 2 + 1 : spread * 2;
-    var backIndex = forward ? target * 2 : target * 2 + 1;
-    flipPivot = new THREE.Group();
-    flipPivot.position.set(0, 0.045, 0.192);
-    var frontMat = new THREE.MeshStandardMaterial({ map: pageTexs[frontIndex], roughness: 0.91, metalness: 0 });
-    var backMat = new THREE.MeshStandardMaterial({ map: pageTexs[backIndex], roughness: 0.91, metalness: 0 });
-    var x = forward ? 1.24 : -1.24;
-    var front = new THREE.Mesh(pageGeometry, frontMat);
-    front.position.set(x, 0, 0.003);
-    var back = new THREE.Mesh(pageGeometry, backMat);
-    back.position.set(x, 0, -0.003);
-    back.rotation.y = Math.PI;
-    flipPivot.add(front); flipPivot.add(back);
-    bookGroup.add(flipPivot);
-    flipDir = dir; flipTarget = target; flipStartT = time; flipping = true;
-    if (forward) rightPage.visible = false; else leftPage.visible = false;
-    updateBookUI();
-  }
-  function finishFlip() {
-    if (!flipPivot) return;
-    spread = flipTarget;
-    bookGroup.remove(flipPivot);
-    flipPivot = null;
-    flipping = false;
-    setSpread(spread);
-    if (leftPage) leftPage.visible = true;
-    if (rightPage) rightPage.visible = true;
-  }
-  function flipTo(target, dir) {
-    if (flipping) return;
-    if (target < 0 || target > SPREADS - 1 || target === spread) return;
-    makeFlip(dir);
-  }
-  function flipForward() { flipTo(spread + 1, 1); }
-  function flipBack() { flipTo(spread - 1, -1); }
-  if (heroCanvas) {
-    var swipeX = null, swipeY = null;
-    heroCanvas.addEventListener('pointerdown', function (e) { swipeX = e.clientX; swipeY = e.clientY; });
-    heroCanvas.addEventListener('pointerup', function (e) {
-      if (swipeX === null) return;
-      var dx = e.clientX - swipeX, dy = e.clientY - swipeY;
-      swipeX = null; swipeY = null;
-      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) { if (dx < 0) flipForward(); else flipBack(); return; }
-      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) {
-        var r = heroCanvas.getBoundingClientRect();
-        if ((e.clientX - r.left) / r.width >= 0.5) flipForward(); else flipBack();
-      }
-    });
-  }
-  document.addEventListener('keydown', function (e) {
-    if (bookMode === 'fallback') {
-      if (e.key === 'ArrowRight') turnFallback(1);
-      else if (e.key === 'ArrowLeft') turnFallback(-1);
-      return;
-    }
-    if (!heroVisible) return;
-    if (e.key === 'ArrowRight') flipForward();
-    else if (e.key === 'ArrowLeft') flipBack();
-  });
-
-  try {
-    buildHero();
-    buildMedals();
-    layoutHero(); layoutMedals();
-    updateBookUI();
-    document.documentElement.classList.add('webgl-on');
-    new IntersectionObserver(function (es) {
-      heroVisible = es[0].isIntersecting;
-      if (heroVisible) startLoop();
-    }, { threshold: 0 }).observe(hero);
-    if (medalsCanvas) {
+  /* ---------- start: preload the Devanagari/Latin fonts (3s timeout
+     race) so the page textures are drawn with the real fonts, then
+     build the scenes. ---------- */
+  function start() {
+    try {
+      buildHero();
+      buildMedals();
+      layoutHero(); layoutMedals();
+      updateBookUI();
+      document.documentElement.classList.add('webgl-on');
       new IntersectionObserver(function (es) {
-        medalsVisible = es[0].isIntersecting;
-        if (medalsVisible) {
-          /* Paint a fresh angle immediately, then keep the loop running:
-             the strip must visibly turn even if the frame chain was
-             momentarily stalled when it scrolled into view. */
-          layoutMedals();
-          if (medalsRenderer) updateMedals(time);
-          startLoop();
-        }
-      }, { threshold: 0 }).observe(medalsCanvas);
+        heroVisible = es[0].isIntersecting;
+        if (heroVisible) startLoop();
+      }, { threshold: 0 }).observe(hero);
+      if (medalsCanvas) {
+        new IntersectionObserver(function (es) {
+          medalsVisible = es[0].isIntersecting;
+          if (medalsVisible) {
+            /* Paint a fresh angle immediately, then keep the loop running:
+               the strip must visibly turn even if the frame chain was
+               momentarily stalled when it scrolled into view. */
+            layoutMedals();
+            if (medalsRenderer) updateMedals(time);
+            startLoop();
+          }
+        }, { threshold: 0 }).observe(medalsCanvas);
+      }
+      /* Watchdog: if the frame chain ever dies while a scene is on screen,
+         restart it within a second. It renders nothing itself and never
+         runs while the tab is hidden, so off-screen pausing is preserved. */
+      setInterval(function () {
+        if (!document.hidden && (heroVisible || medalsVisible) && rafId === null) startLoop();
+      }, 1000);
+      document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) startLoop();
+      });
+    } catch (err) {
+      /* Never break the page: show the flippable static fallback instead. */
+      try { heroCanvas.remove(); if (medalsCanvas) medalsCanvas.remove(); } catch (e2) {}
+      document.documentElement.classList.remove('webgl-on');
+      drawFallback();
     }
-    /* Watchdog: if the frame chain ever dies while a scene is on screen,
-       restart it within a second. It renders nothing itself and never
-       runs while the tab is hidden, so off-screen pausing is preserved. */
-    setInterval(function () {
-      if (!document.hidden && (heroVisible || medalsVisible) && rafId === null) startLoop();
-    }, 1000);
-    document.addEventListener('visibilitychange', function () {
-      if (!document.hidden) startLoop();
-    });
-  } catch (err) {
-    /* Never break the page: show the flippable static fallback instead. */
-    try { heroCanvas.remove(); if (medalsCanvas) medalsCanvas.remove(); } catch (e2) {}
-    document.documentElement.classList.remove('webgl-on');
-    drawFallback();
   }
+  var fontWait = (document.fonts && document.fonts.load) ? Promise.all([
+    document.fonts.load('600 60px "Tiro Devanagari Sanskrit"', 'विद्या'),
+    document.fonts.load('500 36px "Tiro Devanagari Sanskrit"', 'अर्थ'),
+    document.fonts.load('700 48px "Cormorant Garamond"'),
+    document.fonts.load('500 30px "Cormorant Garamond"')
+  ]).catch(function () {}) : Promise.resolve();
+  Promise.race([fontWait, new Promise(function (r) { setTimeout(r, 3000); })]).then(start);
 })();
-
 </script>
 </body>
 </html>
