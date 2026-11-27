@@ -263,25 +263,12 @@ html.js-anim .hero .ms-widget{animation:heroRise .9s cubic-bezier(.2,.7,.2,1) ba
 
 /* ---- Real WebGL layer (Three.js) ---- */
 .hero-inner{position:relative;z-index:2}
-/* ---- spread dots + reader panel (ChatGPT v11): the reader panel shows the
-   open spread in large HTML text — the readability guarantee on phones,
-   where the 3D book's texture text is small. ---- */
-.reader{display:grid;grid-template-columns:1fr 1fr;gap:18px;width:100%;max-width:1180px;margin:28px auto 0;text-align:center}
-.reader .card{background:rgba(246,240,224,.045);border:1px solid rgba(197,162,74,.4);border-radius:4px;padding:26px 22px}
-.reader .card.sw{animation:swap .7s .5s both}
-.reader .card .pn{font-size:.9rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold)}
-.reader .card .sd{font-family:"Tiro Devanagari Sanskrit",serif;font-weight:600;font-size:clamp(1.3rem,3.6vw,1.8rem);line-height:1.75;margin:.7rem 0 1rem;color:var(--ivory)}
-.reader .card .hi{font-family:"Tiro Devanagari Sanskrit",serif;font-size:clamp(1rem,2.6vw,1.12rem);line-height:1.8;color:#e6dcc3;border-top:1px solid rgba(197,162,74,.3);padding-top:.9rem}
-.reader .card .hi b{color:var(--gold);font-weight:600;margin-right:.4em}
-.reader .card .en{font-style:italic;font-size:clamp(1.1rem,2.8vw,1.28rem);line-height:1.55;margin-top:.8rem;opacity:.92}
-@keyframes swap{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-@media (max-width:700px){.reader{grid-template-columns:1fr}}
 .hero h1,.hero .designation,.hero .tagline,.hero .sub{text-shadow:0 2px 18px rgba(6,14,36,.9),0 0 3px rgba(6,14,36,.65)}
 .medals-3d{position:relative;height:200px;margin-top:26px;border-radius:22px;background:radial-gradient(600px 200px at 50% 0%,#24468c 0%,transparent 60%),linear-gradient(160deg,var(--navy2),var(--navy));overflow:hidden;box-shadow:var(--shadow)}
 .medals-3d canvas{width:100%;height:100%;display:block;pointer-events:none}
 .medals-note{position:absolute;left:0;right:0;bottom:10px;text-align:center;color:rgba(232,217,174,.75);font-size:11px;letter-spacing:.22em;font-weight:700;pointer-events:none}
 @media(max-width:900px){.medals-3d{height:160px}}
-@media (prefers-reduced-motion: reduce){#webglMedals{display:none}.reader .card.sw{animation:none}}
+@media (prefers-reduced-motion: reduce){#webglMedals{display:none}}
 
 /* ---- Gemini 3D shloka book (Google AI Studio) ---- */
     :root {
@@ -798,10 +785,6 @@ html.js-anim .hero .ms-widget{animation:heroRise .9s cubic-bezier(.2,.7,.2,1) ba
     </div>
 
   </section>
-    <section class="reader" id="reader" aria-label="Shlokas on the open pages">
-      <article class="card" id="rc0"></article>
-      <article class="card" id="rc1"></article>
-    </section>
   </div>
 </section>
 
@@ -1501,13 +1484,6 @@ html.js-anim .hero .ms-widget{animation:heroRise .9s cubic-bezier(.2,.7,.2,1) ba
 
 
         syncAccessibleTranscript();
-
-        /* Portfolio reader panel hook: the always-visible reader below the
-           book updates from the same PAGES data on every spread change
-           (WebGL flip, 2D fallback flip, keys, swipe, book tap). */
-        if (typeof window.__onBookSpreadChange === "function") {
-          try { window.__onBookSpreadChange(state.spread, PAGES[state.spread * 2], PAGES[state.spread * 2 + 1]); } catch (err) {}
-        }
 
         if (announce) {
           dom.srLive.textContent = state.coverClosed
@@ -3865,37 +3841,7 @@ html.js-anim .hero .ms-widget{animation:heroRise .9s cubic-bezier(.2,.7,.2,1) ba
     })();
   </script>
 
-<script>
-/* Portfolio reader panel (always visible below the book): large HTML text
-   of the open spread, synced to the new Gemini book via the
-   window.__onBookSpreadChange hook (fired from syncUI on every flip:
-   WebGL, 2D fallback, keys, swipe, book tap).
-   The book starts open on pages 1-2, so the panel renders spread 0 here. */
-(function () {
-  'use strict';
-  var DEVA_NUM = '\u0966\u0967\u0968\u0969\u096a\u096b\u096c\u096d\u096e\u096f';
-  function devaNum(n) { return String(n).replace(/\d/g, function (d) { return DEVA_NUM[+d]; }); }
-  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-  var lastSpread = -1;
-  function render(spread, left, right) {
-    if (spread === lastSpread) return;
-    lastSpread = spread;
-    var pages = [left, right];
-    for (var k = 0; k < 2; k++) {
-      var p = pages[k], el = document.getElementById('rc' + k);
-      if (!el || !p) continue;
-      el.innerHTML = '<div class="pn">\u0936\u094d\u0932\u094b\u0915 ' + devaNum(p.number) + '</div>' +
-        '<div class="sd">' + esc(p.sanskrit) + '</div>' +
-        '<p class="hi"><b>\u0905\u0930\u094d\u0925</b>' + esc(p.hindi) + '</p>' +
-        '<p class="en">' + esc(p.english) + '</p>';
-      el.classList.remove('sw'); void el.offsetWidth; el.classList.add('sw');
-    }
-  }
-  window.__onBookSpreadChange = render;
-  var book = window.__SANSKRIT_BOOK__;
-  if (book && book.PAGES) render(book.state.spread, book.PAGES[book.state.spread * 2], book.PAGES[book.state.spread * 2 + 1]);
-})();
-</script>
+
 
 
 <script type="module">
