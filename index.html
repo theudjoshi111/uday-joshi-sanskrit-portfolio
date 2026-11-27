@@ -314,46 +314,9 @@ html.js-anim .hero .ms-widget{animation:heroRise .9s cubic-bezier(.2,.7,.2,1) ba
       align-items: center;
       justify-content: center;
       padding: clamp(12px, 2.2vh, 26px) clamp(6px, 2vw, 24px) clamp(18px, 3vh, 32px);
-      background:
-        radial-gradient(ellipse 68% 58% at 50% 44%, rgba(72, 24, 38, 0.52) 0%, rgba(23, 16, 29, 0.88) 52%, rgba(8, 9, 15, 1) 100%),
-        linear-gradient(180deg, #0B0912 0%, #17101D 48%, #08090F 100%);
+      background: transparent;
       isolation: isolate;
       overflow: hidden;
-    }
-
-    /* Restrained studio radial spotlight behind book */
-    .ms-backdrop-glow {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-      background:
-        radial-gradient(circle at 50% 42%, rgba(232, 205, 141, 0.10) 0%, rgba(201, 164, 92, 0.04) 26%, transparent 62%),
-        radial-gradient(ellipse 52% 28% at 50% 56%, rgba(56, 16, 26, 0.34) 0%, transparent 72%);
-    }
-
-    /* Distant subtle golden dust motes (paused under prefers-reduced-motion) */
-    .ms-dust-layer {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-      overflow: hidden;
-      opacity: 0.55;
-    }
-
-    .ms-dust {
-      position: absolute;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(232, 205, 141, 0.9) 0%, rgba(201, 164, 92, 0.25) 55%, transparent 100%);
-      will-change: transform, opacity;
-      animation: ms-dust-drift var(--dur, 22s) ease-in-out var(--delay, 0s) infinite alternate;
-    }
-
-    @keyframes ms-dust-drift {
-      0% { transform: translate3d(0, 0, 0) scale(0.9); opacity: var(--op-lo, 0.14); }
-      50% { opacity: var(--op-hi, 0.45); }
-      100% { transform: translate3d(var(--dx, 14px), var(--dy, -18px), 0) scale(1.1); opacity: var(--op-lo, 0.18); }
     }
 
     /* Main 3D / 2D book stage */
@@ -369,19 +332,6 @@ html.js-anim .hero .ms-widget{animation:heroRise .9s cubic-bezier(.2,.7,.2,1) ba
       touch-action: pan-y;
       user-select: none;
       -webkit-user-select: none;
-    }
-
-    /* Static subtle golden aura halo behind the centered book */
-    .ms-stage-wrap::before {
-      content: "";
-      position: absolute;
-      width: min(82%, 780px);
-      height: min(74%, 440px);
-      border-radius: 50%;
-      background: radial-gradient(ellipse at center, rgba(201, 164, 92, 0.13) 0%, rgba(201, 164, 92, 0.04) 48%, transparent 74%);
-      filter: blur(18px);
-      pointer-events: none;
-      z-index: 0;
     }
 
     .ms-canvas-host {
@@ -738,7 +688,6 @@ html.js-anim .hero .ms-widget{animation:heroRise .9s cubic-bezier(.2,.7,.2,1) ba
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .ms-dust,
       .ms-loader-emblem {
         animation: none !important;
       }
@@ -797,8 +746,6 @@ html.js-anim .hero .ms-widget{animation:heroRise .9s cubic-bezier(.2,.7,.2,1) ba
       </div>
     </div>
   <section class="ms-widget" aria-label="Interactive 3D Sanskrit Wisdom Book">
-    <div class="ms-backdrop-glow" aria-hidden="true"></div>
-    <div class="ms-dust-layer" id="msDustLayer" aria-hidden="true"></div>
 
     <!-- Font preload primer ensuring Devanagari WOFF2 unicode-range subsets download before canvas render -->
     <div class="sr-only" aria-hidden="true">
@@ -1482,7 +1429,6 @@ html.js-anim .hero .ms-widget{animation:heroRise .9s cubic-bezier(.2,.7,.2,1) ba
       var prefersReducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
       var dom = {
-        dustLayer: document.getElementById("msDustLayer"),
         stageWrap: document.getElementById("msStageWrap"),
         loader: document.getElementById("msLoader"),
         canvasHost: document.getElementById("msCanvasHost"),
@@ -1504,39 +1450,6 @@ html.js-anim .hero .ms-widget{animation:heroRise .9s cubic-bezier(.2,.7,.2,1) ba
         mode: "pending", // "webgl" | "fallback"
         webglBridge: null
       };
-
-      /* Restrained distant golden dust particles around perimeter */
-      function populateAmbientDust() {
-        var frag = document.createDocumentFragment();
-        var count = window.innerWidth < 540 ? 16 : 30;
-        var seed = 1337;
-        function rand() {
-          seed = (seed * 16807) % 2147483647;
-          return (seed - 1) / 2147483646;
-        }
-        for (var i = 0; i < count; i++) {
-          var dot = document.createElement("span");
-          dot.className = "ms-dust";
-          var size = (1.6 + rand() * 2.6).toFixed(1);
-          var x = rand() * 100;
-          var y = rand() * 100;
-          if (x > 24 && x < 76 && y > 18 && y < 78) {
-            x = x < 50 ? rand() * 22 : 78 + rand() * 22;
-          }
-          dot.style.width = size + "px";
-          dot.style.height = size + "px";
-          dot.style.left = x.toFixed(2) + "%";
-          dot.style.top = y.toFixed(2) + "%";
-          dot.style.setProperty("--dur", (18 + rand() * 18).toFixed(1) + "s");
-          dot.style.setProperty("--delay", (-rand() * 20).toFixed(1) + "s");
-          dot.style.setProperty("--dx", ((rand() - 0.5) * 26).toFixed(1) + "px");
-          dot.style.setProperty("--dy", (-(10 + rand() * 22)).toFixed(1) + "px");
-          dot.style.setProperty("--op-lo", (0.10 + rand() * 0.12).toFixed(2));
-          dot.style.setProperty("--op-hi", (0.30 + rand() * 0.28).toFixed(2));
-          frag.appendChild(dot);
-        }
-        dom.dustLayer.appendChild(frag);
-      }
 
 
       function escapeHtml(str) {
@@ -1758,7 +1671,6 @@ html.js-anim .hero .ms-widget{animation:heroRise .9s cubic-bezier(.2,.7,.2,1) ba
         }
       });
 
-      populateAmbientDust();
       setupFallbackListeners();
       syncUI(false);
 
