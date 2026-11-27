@@ -427,9 +427,8 @@ html.no-webgl .stage{height:380px;min-height:380px}
     <div class="book-nav">
       <button class="btn btn-ghost" id="prevPage" type="button">← Previous page</button>
       <span class="book-page-ind" id="pageInd">Pages 1–2 of 14</span>
-      <button class="btn btn-ghost" id="nextPage" type="button">Next page →</button>
     </div>
-    <p class="book-hint">Click the book or use the buttons to turn the pages</p>
+    <p class="book-hint">Tap the book or swipe to turn the pages</p>
     <div class="dots" id="dots" aria-hidden="true"></div>
     <section class="reader" id="reader" aria-label="Shlokas on the open pages">
       <article class="card" id="rc0"></article>
@@ -1144,7 +1143,7 @@ html.no-webgl .stage{height:380px;min-height:380px}
       var fs = (s.l.length > 3 ? 64 : 72) * k;
       g.font = '600 ' + fs + 'px ' + DEVA;
       while (fs > 30 && Math.max.apply(null, s.l.map(function (t) { return g.measureText(t).width; })) > mw) { fs -= 2; g.font = '600 ' + fs + 'px ' + DEVA; }
-      var hs = 36 * k, es = 48;
+      var hs = 40 * k, es = 48;
       g.font = '500 ' + hs + 'px ' + DEVA; var hl = wrap(g, s.h, mw);
       g.font = '700 ' + es + 'px ' + LAT; var el = wrap(g, s.e, mw);
       L = { fs: fs, hs: hs, es: es, hl: hl, el: el, a: fs * 1.7, b: hs * 1.65, c: es * 1.35 };
@@ -1154,13 +1153,13 @@ html.no-webgl .stage{height:380px;min-height:380px}
     var y = top + (avail - L.tot) / 2 + L.a / 2;
     g.fillStyle = '#1d2b4d'; g.font = '600 ' + L.fs + 'px ' + DEVA;
     s.l.forEach(function (t) { g.fillText(t, cx, y); y += L.a; });
-    y += 2; g.fillStyle = '#b8975a'; g.fillRect(cx - 70, y, 140, 2); y += 40;
-    g.fillStyle = '#8a6f3c'; g.font = '600 ' + (L.hs * 0.85) + 'px ' + DEVA; g.fillText('अर्थ', cx, y); y += L.b * 0.9;
-    g.fillStyle = '#3a2410'; g.font = '500 ' + L.hs + 'px ' + DEVA;
+    y += 2; g.fillStyle = '#8a6f3c'; g.fillRect(cx - 70, y, 140, 4); y += 40;
+    g.fillStyle = '#5a451f'; g.font = '700 ' + (L.hs * 0.95) + 'px ' + DEVA; g.fillText('अर्थ', cx, y); y += L.b * 0.9;
+    g.fillStyle = '#241505'; g.font = '600 ' + L.hs + 'px ' + DEVA;
     L.hl.forEach(function (t) { g.fillText(t, cx, y); y += L.b; });
     y += 24; g.fillStyle = '#14100a'; g.font = '700 ' + L.es + 'px ' + LAT;
     L.el.forEach(function (t) { g.fillText(t, cx, y); y += L.c; });
-    g.fillStyle = '#8a6f3c'; g.font = '500 30px ' + LAT; g.fillText('— ' + n + ' —', cx, TH - 112);
+    g.fillStyle = '#5a451f'; g.font = '600 34px ' + LAT; g.fillText('— ' + n + ' —', cx, TH - 112);
     var t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
     t.anisotropy = Math.min(8, heroRenderer.capabilities.getMaxAnisotropy()); return t;
   }
@@ -1369,7 +1368,7 @@ html.no-webgl .stage{height:380px;min-height:380px}
     if (!w || !h) return;
     heroRenderer.setSize(w, h, false);
     heroCamera.aspect = w / h;
-    var t = 2 * Math.tan(heroCamera.fov * Math.PI / 360), d = Math.max(3.9 / t, 5.0 / (heroCamera.aspect * t));
+    var t = 2 * Math.tan(heroCamera.fov * Math.PI / 360), d = Math.max(3.9 / t, 4.55 / (heroCamera.aspect * t)); /* 4.55: on a phone the book fills ~97% of the stage so page text reads bigger; desktop unchanged (height term rules there) */
     heroCamera.position.set(0, 0.5, d);
     heroCamera.lookAt(0, 0, 0);
     heroCamera.updateProjectionMatrix();
@@ -1419,7 +1418,7 @@ html.no-webgl .stage{height:380px;min-height:380px}
       S.cg.position.z = -dp - 0.04;
     });
     if (intro < 1) intro = Math.min(1, intro + dt / 1.8);
-    var k = ease(intro), bob = Math.sin(t * 1.1) * 0.07;
+    var k = ease(intro), bob = 0; /* no idle bob: the moving plane made the thin mid-page lines shimmer */
     uy += ((mx * 0.3) - uy) * 0.06;
     bookGroup.scale.setScalar(0.72 + 0.28 * k);
     bookGroup.position.y = bob;
